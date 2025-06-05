@@ -55,4 +55,3 @@
 3. **其他资源** {insert\_element\_27\_} 
    - QUADS.for程序、RCM半带宽优化算法  
    - 桥梁结构背景知{insert\_element\_28\_}识（竞赛参考）  
-```{insert\_element\_29\_}
