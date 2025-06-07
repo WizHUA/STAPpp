@@ -1,3 +1,9 @@
 {
-    "cmake.sourceDirectory": "/home/wiz/WorkSpace/STAPpp/src"
+    "cmake.sourceDirectory": "/home/wiz/WorkSpace/STAPpp/src",
+    "files.associations": {
+        "iostream": "cpp",
+        "iosfwd": "cpp",
+        "ostream": "cpp",
+        "random": "cpp"
+    }
 }

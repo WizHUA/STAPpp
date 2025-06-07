@@ -189,10 +189,17 @@ bool CDomain::ReadElements()
 {
     EleGrpList = new CElementGroup[NUMEG];
 
-//	Loop over for all element group
-	for (unsigned int EleGrp = 0; EleGrp < NUMEG; EleGrp++)
-        if (!EleGrpList[EleGrp].Read(Input))
+    // Loop over for all element group
+    for (unsigned int EleGrp = 0; EleGrp < NUMEG; EleGrp++) {
+        cout << "Reading element group " << EleGrp + 1 << endl;
+        
+        if (!EleGrpList[EleGrp].Read(Input)) {
+            cerr << "*** Error *** Failed to read element group " << EleGrp + 1 << endl;
             return false;
+        }
+        
+        cout << "Successfully read element group " << EleGrp + 1 << endl;
+    }
     
     return true;
 }

@@ -1,0 +1,179 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\title{直接刚度法 - 有限元程序设计}
+\author{清华大学}
+\date{2025/2/27}
+
+\begin{document}
+
+\maketitle
+
+\section{第2章 直接刚度法}
+\subsection{2.5 有限元程序设计}
+
+\subsubsection{有限元程序设计概述}
+- 有限元法具有很强的通用性，可分析几乎任何具有复杂边界和加载条件的连续介质问题。
+- 有限元程序的效率取决于{insert\_element\_0\_}所使用的单元/算法和程序设计方法。
+- 现有有限元商用软件大部{insert\_element\_1\_}分采用面向过程的FORTRAN语言，这是历史原因导致的。
+- C++语言是面向对象的{insert\_element\_2\_}语言，支持数据封装和隐藏、继承和重用以及多态性。
+- C++程序具有良好的可{insert\_element\_3\_}维护性、易修改性和复用性，许多大型科学计算软件都采用或改用C++语言。
+- 开源计算流体力学软件O{insert\_element\_4\_}penFOAM是用C++开发的。
+- 分子动力学模拟开源程序{insert\_element\_5\_}包LAMMPS先后采用Fortran 77和Fortran 90开发，2004年后改用C++开发。
+
+\subsubsecti{insert\_element\_6\_}on{STAP系列程序}
+- STAP程序是K.J. Bathe用FORTRAN IV编写的，其程序结构与SAP和ADINA的程序结构类似。
+- STAP90是用FOR{insert\_element\_7\_}TRAN 90语言对STAP程序改写而成的，作为《计算动力学》教材的教学程序，可在GitHub上获取。
+- STAPpp是用C++{insert\_element\_8\_}语言编写的基于面向对象思想设计的有限元法程序，可在GitHub上获取。
+- STAPpy是用Pyt{insert\_element\_9\_}hon语言编写的基于面向对象思想设计的有限元法程序，可在GitHub上获取。
+- STAPpp只包含有限{insert\_element\_10\_}元法的中间三步：单元分析、总刚组装和方程求解。
+- 前处理可使用Gmsh（{insert\_element\_11\_}开源）、HyperMesh、GiD等软件，后处理可使用Tecplot、ParaView（开源）等软件。
+- STAP90、STAP{insert\_element\_12\_}pp和STAPpy的输入输出文件格式相同，大作业1可以选择其中之一。
+
+\subsubsecti{insert\_element\_13\_}on{STAPpp程序类}
+- CDomain类：对有限元模型数据进行封装。
+- CNode类：封装节点{insert\_element\_14\_}数据。
+- CElement抽象类{insert\_element\_15\_}：封装单元数据，派生各类单元。
+- CElementGro{insert\_element\_16\_}up类：封装单元组数据，所有单元被分为若干个单元组，每个单元组只允许具有一种类型的单元。
+- CMaterial抽象{insert\_element\_17\_}类：封装截面/材料属性数据，派生各类截面/材料。
+- CLoadCaseDa{insert\_element\_18\_}ta类：封装载荷数据。
+- CSkylineMat{insert\_element\_19\_}rix类：封装按一维变带宽方式存储的总体刚度矩阵。
+
+\subsubsecti{insert\_element\_20\_}on{有限元模型数据}
+\paragraph{节点数据}
+- 一个有限元节点应具有节点号、节点坐标和节点边界条件等数据。
+- 每个节点各自由度边界条{insert\_element\_21\_}件类型由bcode[NDF]表示，其中bcode[i]=0表示该节点的第i个方向自由，bcode[i]=1表示该节点的第i个方向固定。
+- NDF为每个节点的最大{insert\_element\_22\_}自由度数，例如平面应力/应变单元NDF=2，板单元NDF=3，壳单元NDF=5/6。
+
+\paragraph{单{insert\_element\_23\_}元数据}
+- 描述一个单元所需的数据取决于单元的具体类型，包括单元的节点编号、截面/材料属性、施加在该单元上的面力或体力等🔶2-61🔶🔶2-62🔶🔶2-63🔶🔶2-64🔶🔶2-65🔶。
+- 多个单元可以具有相同的单元截面/材料属性和单元载荷，单元数据通常以表格形式存储，例如：
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+单元号 & 左节点号 & 右节点号 & 截面/材料属性组号 \\
+\hline
+1 & 1 & 7 & 1 \\
+\hline
+2 & 1 & 2 & 1 \\
+\hline
+3 & 2 & 7 & 1 \\
+\hline
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ \\
+\hline
+22 & 6 & 12 & 1 \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{载荷数据}
+- 在有限元法中，载荷既可以作用在单元上，也可以直接作用在节点上，但最终都会转化为节点载荷求解。
+- STAPpp目前只允许{insert\_element\_24\_}输入节点载荷，作用在单元上的载荷需要由用户自己转化为节点载荷，用户也可扩充代码以允许输入单元载荷。
+- 载荷数据以表格形式输入{insert\_element\_25\_}，例如：
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+受载荷作用的节点号 & 载荷作用方向 & 载荷值 \\
+\hline
+3 & 2 & -7000 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{输入数据文件格式}
+STAPpp的输入数据文件包括以下五部分，需严格按照顺序填写：
+
+\paragraph{标题行}
+- 列1-80为标题HED(80)，用于对所求解问题进行简单描述。
+
+\paragraph{控{insert\_element\_26\_}制行}
+- 列1-5为NUMNP，即结点总数，若为0则程序终止运行。
+- 列6-10为NUMFG{insert\_element\_27\_}，即单元组总数，每个单元组只能包含相同类型的单元。
+- 列11-15为NLCA{insert\_element\_28\_}SE，即载荷工况数。
+- 列16-20为MODE{insert\_element\_29\_}X，即求解模式，等于0时只做数据检查，等于1时进行求解。
+
+\paragraph{结{insert\_element\_30\_}点数据}
+- 列1-5为结点号N。
+- 列6-10为ID(1,{insert\_element\_31\_}N)，即x-平动方向边界条件代码。
+- 列11-15为ID(2{insert\_element\_32\_},N)，即y-平动方向边界条件代码。
+- 列16-20为ID(3{insert\_element\_33\_},N)，即z-平动方向边界条件代码。
+- 列21-30为X(N){insert\_element\_34\_}，即x-坐标。
+- 列31-40为Y(N){insert\_element\_35\_}，即y-坐标。
+- 列41-50为Z(N){insert\_element\_36\_}，即z-坐标。
+
+\paragraph{载{insert\_element\_37\_}荷数据}
+- 先输入NLCASE组载荷数据控制行，列1-5为载荷工况号LL，列6-10为NLOAD，即本工况中集中载荷的个数。
+- 再输入各工况载荷数据，{insert\_element\_38\_}列1-5为NOD，即集中载荷作用的结点号；列6-10为IDIRN，即载荷作用方向；列11-20为FLOAD，即载荷值。
+
+\paragraph{轴{insert\_element\_39\_}力杆单元数据}
+- 单元组控制数据：列1-5为NPAR(1)，即单元类型；列6-10为NPAR(2)，即本单元组中的单元总数；列11-15为NPAR(3)，即不同材料/截面性质组数🔶2-117🔶。
+- 材料/截面性质数据：列{insert\_element\_40\_}1-5为材料/截面性质组号N；列6-15为E(N)，即杨氏模量；列16-25为AREA(N)，即截面面积🔶2-120🔶。
+- 单元数据：列1-5为单{insert\_element\_41\_}元号M；列6-10为II，即单元左端结点号；列11-15为JJ，即单元右端结点号；列16-20为MTYP，即本单元的材料/截面性质组号🔶2-123🔶。
+
+\subsubsecti{insert\_element\_42\_}on{结构总体矩阵的存储与组装}
+\paragraph{存储格式}
+- 结构总体刚度矩阵是高度稀疏的，常用的存储格式包括一维变带宽存储格式、行压缩格式(CSR)、列压缩格式(CSC)、坐标存储格式(COO)等🔶2-133🔶🔶2-136🔶🔶2-137🔶🔶2-138🔶。
+- 一维变带宽存储格式用一个一维数组A按列依次存储结构总体刚度矩阵的上三角阵，可大大减少存储量和计算时间。
+
+\paragraph{关{insert\_element\_43\_}键概念}
+- 列高$H_i$：矩阵K第i列第1个非零元素的行号$m_i$，则列高$H_i = i - m_i$，表示第i列轮廓线内元素的个数(不含对角元)。
+- 最大半带宽$m_k ={insert\_element\_44\_} \max(i - m_i)$。
+- 对角元地址数组Diag{insert\_element\_45\_}：各对角元在数组A中的地址为前$(i-1)$列的列高的总和再加上i。
+- $K_{ij}(j \{insert\_element\_46\_}geq i)$的地址为$M_j + (j - i)$，其中$M_i = \sum_{j=1}^{i-1} H_j + i$。
+
+\paragraph{矩{insert\_element\_47\_}阵组装}
+- 单元对号数组LocationMatrix存储单元各自由度所对应的总体自由度号，可通过bcode生成。
+- 结构总体矩阵的组装公式{insert\_element\_48\_}为$K = \sum_{e} L^{eT} K^{e} L^{e}$。
+
+\paragraph{节点重编号}
+- 对节点进行重编号可以缩减列高，应使所有相邻结点对的编号差的最大绝对值尽可能小🔶2-183🔶。
+
+\subsubsecti{insert\_element\_49\_}on{STAPpp文件结构}
+STAPpp文件结构包括多个C++源文件和头文件，如Bar.cpp、Clock.cpp、Domain.cpp、Element.cpp、ElementGroup.cpp、LoadCaseData.cpp、Node.cpp、Material.cpp、Solve.cpp等，以及CMakeLists.txt用于自动生成工程文件🔶2-205🔶。
+
+\subsubsecti{insert\_element\_50\_}on{练习与填空题}
+\paragraph{练习}
+一桁架结构由5个杆组成，节点1和2自由，其余节点固定，各节点的边界条件类型数组bcode和各单元的节点号数组IEN分别为：
+\[
+bcode = \left[\begin{array}{lllll}0 & 0 & 1 & 1 & 1 \\ 0 & 0 & 1 & 1 & 1\end{array}\right]
+\]
+\[
+IEN = \left[\begin{array}{lllll}3 & 4 & 1 & 4 & 5 \\ 1 & 1 & 2 & 2 & 2\end{array}\right]
+\]
+求各节点自由度对应的总体自由度号、各单元对号数组、总刚度阵各列列高、对角元地址和数组A的大小。
+
+\paragraph{填空题}
+- 对于给定的bcode矩阵，第20列列高为[填空1]🔶2-210🔶。
+- 已知bcode和IEN{insert\_element\_51\_}，求M(:) = [填空1], [填空2], [填空3], [填空4], [填空5]；H(:) = [填空5], [填空6], [填空7], [填空8]；LM(:,4) = [填空8], [填空9]；数组A非零元素的个数 = [填空1]🔶2-215🔶🔶2-216🔶🔶2-217🔶🔶2-218🔶🔶2-219🔶🔶2-220🔶🔶2-221🔶🔶2-222🔶。
+
+\subsubsection{C++面向对象编程基础}
+- C++在C语言的基础上增加了面向对象编程，类是C++的核心特性，用于指定对象的形式，包含数据表示法和处理数据的方法🔶2-231🔶。
+- 类的定义示例：
+\be{insert\_element\_52\_}gin{verbatim}
+class Box {
+public:
+    double length;   // 长度
+    double breadth;  // 宽度
+    double height;   // 高度
+    double get(void);
+    void set(double len, double bre, double hei);
+};
+
+double Box::get(void) {
+    return length * breadth * height;
+}
+
+void Box::set(double len, double bre, double hei) {
+    length = len;
+    breadth = bre;
+    height = hei;
+}
+\end{verbatim}
+
+\end{document}

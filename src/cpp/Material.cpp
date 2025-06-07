@@ -31,3 +31,19 @@ void CBarMaterial::Write(COutputter& output)
 {
 	output << setw(16) << E << setw(16) << Area << endl;
 }
+
+//! Read material data from stream Input
+bool CPlaneStressMaterial::Read(ifstream& Input)
+{
+    Input >> nset >> E >> nu >> t;
+    return true;
+}
+
+//! Write material data to Stream
+void CPlaneStressMaterial::Write(COutputter& output)
+{
+    output << setw(5) << nset
+           << setw(16) << E
+           << setw(16) << nu
+           << setw(16) << t << endl;
+}

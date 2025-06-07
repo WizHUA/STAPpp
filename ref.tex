@@ -1,0 +1,192 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\title{线弹性问题的有限元格式}
+\author{清华大学}
+\date{2025/4/5}
+
+\begin{document}
+
+\maketitle
+
+\section{第4章 线弹性问题的有限元格式}
+\subsection{4.4 有限元格式}
+
+\subsubsection{位移近似函数与弱形式}
+位移近似函数的弱形式为：
+\[
+\int_{\Omega}\left(\nabla_{S} w\right)^{T} D \nabla_{S} u d \Omega = \int_{\Gamma_{t}} w^{T} \overline{t} d \Gamma + \int_{\Omega} w^{T} b d \Omega = 0 \quad \forall w \in U_{0}
+\]
+
+\subsubsection{应变和应力}
+- 位移分量近似：
+  \[
+  u_{x} \approx u_{x}^{e}(x, y) = \sum_{I=1}^{n_{en}} N_{I}^{e}(x, y) u_{x I}^{e}
+  \]
+  \[
+  u_{y} \approx u_{y}^{e}(x, y) = \sum_{I=1}^{n_{en}} N_{I}^{e}(x, y) u_{y I}^{e}
+  \]
+  矩阵形式：
+  \[
+  \left[\begin{array}{c}u_{x}^{e} \\ u_{y}^{e}\end{array}\right] = \sum_{I=1}^{n_{en}}\left[\begin{array}{cc}N_{I}^{e} & 0 \\ 0 & N_{I}^{e}\end{array}\right]\left[\begin{array}{l}u_{x I}^{e} \\ u_{y I}^{e}\end{array}\right]
+  \]
+  
+- 位移向量与测试函数近似：
+  \[
+  u(x, y) = \left[\begin{array}{ll} u_{x} & u_{y} \end{array}\right]^{T} \approx u^{e}(x, y) = N^{e}(x, y) d^{e}
+  \]
+  \[
+  w(x, y) \approx w^{e}(x, y) = N^{e}(x, y) w^{e}
+  \]
+  
+- 应变矩阵：
+  \[
+  \varepsilon \approx \varepsilon^{e} = \nabla_{S} u^{e} = B^{e} d^{e}
+  \]
+  其中，$\nabla_{S}$为应变梯度算子：
+  \[
+  \nabla_{S} = \left[\begin{array}{cc}\frac{\partial}{\partial x} & 0 \\ 0 & \frac{\partial}{\partial y} \\ \frac{\partial}{\partial y} & \frac{\partial}{\partial x}\end{array}\right]
+  \]
+  形函数矩阵$N^{e}$和应变矩阵$B^{e}$：
+  \[
+  N^{e} = \left[\begin{array}{llll}N_{1}^{e} & N_{2}^{e} & \cdots & N_{n_{en}}^{e}\end{array}\right]
+  \]
+  \[
+  N_{I}^{e} = \left[\begin{array}{cc}N_{I}^{e} & 0 \\ 0 & N_{I}^{e}\end{array}\right]
+  \]
+  \[
+  B^{e} = \nabla_{S} N^{e} = \left[\begin{array}{llll} B_{1}^{e} & B_{2}^{e} & \cdots & B_{n_{en}}^{e} \end{array}\right]
+  \]
+  \[
+  B_{I}^{e} = \nabla_{S} N_{I}^{e} = \left[\begin{array}{cc}N_{I,x}^{e} & 0 \\ 0 & N_{I,y}^{e} \\ N_{I,y}^{e} & N_{I,x}^{e}\end{array}\right]
+  \]
+  
+- 应力矩阵：
+  \[
+  \sigma^{e} = D^{e} B^{e} d^{e}
+  \]
+
+\subsubsection{有限元离散格式}
+- 整体弱形式离散：
+  \[
+  \sum_{s=1}^{n_{el}}\left\{\int_{\Omega^{e}}\left(\nabla_{S} w^{e}\right)^{T} D \nabla_{S} u^{e} d \Omega - \int_{\Gamma_{t}^{e}} w^{e T} \overline{t} d \Gamma - \int_{\Omega^{e}} w^{e T} b d \Omega\right\} = 0 \quad \forall w^{e} \in U_{0}^{h}
+  \]
+  
+- 单元刚度矩阵与外力列阵：
+  \[
+  K^{e} = \int_{\Omega^{e}} B^{e T} D^{e} B^{e} d \Omega
+  \]
+  \[
+  f^{e} = \int_{\Omega^{e}} N^{e T} b d \Omega + \int_{\Gamma_{t}^{e}} N^{e T} \overline{t} d \Gamma
+  \]
+  
+- 整体刚度方程：
+  \[
+  K = \sum_{e=1}^{n_{el}} L^{e T} K^{e} L^{e}, \quad f = \sum_{e=1}^{n_{el}} L^{e T} f^{e}
+  \]
+  \[
+  K d = f
+  \]
+
+\subsubsection{单元类型与数值积分}
+
+\paragraph{3节点三角形单元}
+- 形函数：
+  \[
+  N_{I}^{e} = \frac{1}{2 A^{e}}\left[a_{I} + b_{I} x + c_{I} y\right] \quad (I=1,2,3)
+  \]
+- 应变矩阵：
+  \[
+  B^{e} = \frac{1}{2 A^{e}}\left[\begin{array}{cccccc}b_{1} & 0 & b_{2} & 0 & b_{3} & 0 \\ 0 & c_{1} & 0 & c_{2} & 0 & c_{3} \\ c_{1} & b_{1} & c_{2} & b_{2} & c_{3} & b_{3}\end{array}\right]
+  \]
+- 单元刚度矩阵：
+  \[
+  K^{e} = t^{e} A^{e} B^{e T} D B^{e}
+  \]
+- 体力列阵（均布体力）：
+  \[
+  f_{\Omega}^{e} = \frac{A^{e}}{3}\left[\begin{array}{c}b_{x} \\ b_{y} \\ b_{x} \\ b_{y} \\ b_{x} \\ b_{y}\end{array}\right]
+  \]
+- 边界力列阵（均匀分布面力）：
+  \[
+  f_{\Gamma}^{e} = \frac{l t^{e}}{2}\left[\begin{array}{llllll}t_{x} & t_{y} & t_{x} & t_{y} & 0 & 0\end{array}\right]^{T}
+  \]
+
+\paragraph{4节点四边形单元}
+- 形函数（自然坐标）：
+  \[
+  N_{I}^{Q 4}(\xi, \eta) = \frac{1}{4}\left(1 + \xi_{I} \xi\right)\left(1 + \eta_{I} \eta\right)
+  \]
+- 雅可比矩阵：
+  \[
+  J^{e} = \frac{\partial(x,y)}{\partial(\xi,\eta)}, \quad |J^{e}| \text{ 为雅可比行列式}
+  \]
+- 应变矩阵：
+  \[
+  \nabla N^{e} = (J^{e})^{-1} G N^{Q 4}
+  \]
+  \[
+  B^{e} = \left[\begin{array}{ccccccccc}N_{1,x}^{Q 4} & 0 & N_{2,x}^{Q 4} & 0 & N_{3,x}^{Q 4} & 0 & N_{4,x}^{Q 4} & 0 \\ 0 & N_{1,y}^{Q 4} & 0 & N_{2,y}^{Q 4} & 0 & N_{3,y}^{Q 4} & 0 & N_{4,y}^{Q 4} \\ N_{1,y}^{Q 4} & N_{1,x}^{Q 4} & N_{2,y}^{Q 4} & N_{2,x}^{Q 4} & N_{3,y}^{Q 4} & N_{3,x}^{Q 4} & N_{4,y}^{Q 4} & N_{4,x}^{Q 4}\end{array}\right]
+  \]
+- 单元刚度矩阵（高斯积分）：
+  \[
+  K^{e} = \int_{-1}^{1} \int_{-1}^{1} B^{e T} D^{e} B^{e}|J^{e}| d\xi d\eta = \sum_{i=1}^{n} \sum_{j=1}^{n} W_{i} W_{j} B^{e T}(\xi_{i}, \eta_{j}) D^{e} B^{e}(\xi_{i}, \eta_{j})|J^{e}(\xi_{i}, \eta_{j})|
+  \]
+- 体力列阵（均布体力）：
+  \[
+  f_{\Omega}^{e} = \frac{A^{e} t^{e}}{4}\left[\begin{array}{lllllllll} b_{x} & b_{y} & b_{x} & b_{y} & b_{x} & b_{y} & b_{x} & b_{y} \end{array}\right]^{T}
+  \]
+- 边界力列阵：
+  \[
+  f_{\Gamma}^{e} = \frac{l t^{e}}{6}\left[\begin{array}{c} 2 t_{x 1} + t_{x 2} \\ 2 t_{y 1} + t_{y 2} \\ t_{x 1} + 2 t_{x 2} \\ t_{y 1} + 2 t_{y 2} \end{array}\right]
+  \]
+
+\subsubsection{高斯求积方案}
+- 完全积分：当$|J^{e}|$为常数时，精确积分所需的高斯点数量为$2 \times 2$。
+- 减缩积分：比完全积分低1阶，可能导致零能模态，但理论上仍保证收敛。
+
+\subsubsection{例题分析}
+以线弹性平面应力问题为例，弹性矩阵：
+\[
+D = \frac{E}{1-v^{2}}\left[\begin{array}{ccc} 1 & v & 0 \\ v & 1 & 0 \\ 0 & 0 & \frac{1-v}{2} \end{array}\right]
+\]
+通过高斯积分计算单元刚度矩阵和应力分布，结果如下表所示：
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+$x$坐标 & $y$坐标 & $\sigma_{xx}$ & $\sigma_{yy}$ & $\tau_{xy}$ \\
+\hline
+0.422650 & 0.294658 & -12.532826 & -5.642554 & -45.465564 \\
+\hline
+1.577350 & 0.522329 & -42.020481 & -22.981450 & 2.552920 \\
+\hline
+0.422650 & 0.811004 & 28.457070 & 6.654415 & -46.454727 \\
+\hline
+1.577350 & 0.872008 & 18.506311 & -4.823413 & 1.092294 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{边界条件与收敛性分析}
+- 边界条件分类：位移边界$\Gamma_{u}$和面力边界$\Gamma_{t}$，满足$\Gamma_{u} \cup \Gamma_{t} = \Gamma$且$\Gamma_{u} \cap \Gamma_{t} = \emptyset$。
+- 对称性条件：如$u_{x}=0$和$t_{y}=0$在对称面上。
+- 收敛性分析：通过逐步加密网格计算误差$L_{2}$范数，收敛率应满足$\|e\|_{L_{2}} = C h^{p+1}$。
+
+\subsubsection{常见问题与解决方案}
+- 剪切闭锁：低阶单元在弯曲问题中过于刚硬，虚假剪切变形吸收能量。
+- 体积闭锁：几乎不可压材料（$v \to 1/2$）时体积应变约束过强，导致网格僵硬。
+- 应力奇异性：集中力作用点、锐角顶点处应力无限大，需特殊处理。
+
+\subsubsection{验证与确认}
+- 验证：比较有限元解与数学模型精确解，确保程序正确性（收敛性分析、分片试验）。
+- 确认：比较有限元解与实验结果，确保模型反映实际物理问题。
+
+\section{填空题解答}
+假设平面单元的厚度$t = \sum_{I} N_{I} t_{I}$，Q4单元的完全积分为\underline{2}×\underline{2}点高斯求积。
+
+\end{document}

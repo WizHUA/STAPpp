@@ -66,6 +66,10 @@ void CElementGroup::CalculateMemberSize()
             ElementSize_ = sizeof(CBar);
             MaterialSize_ = sizeof(CBarMaterial);
             break;
+        case ElementTypes::T3:
+            ElementSize_ = sizeof(CT3);
+            MaterialSize_ = sizeof(CPlaneStressMaterial);
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::CalculateMemberSize." << std::endl;
             exit(5);
@@ -81,6 +85,9 @@ void CElementGroup::AllocateElements(std::size_t size)
         case ElementTypes::Bar:
             ElementList_ = new CBar[size];
             break;
+        case ElementTypes::T3:
+            ElementList_ = new CT3[size];
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::AllocateElement." << std::endl;
             exit(5);
@@ -95,6 +102,9 @@ void CElementGroup::AllocateMaterials(std::size_t size)
         case ElementTypes::Bar:
             MaterialList_ = new CBarMaterial[size];
             break;
+        case ElementTypes::T3:
+            MaterialList_ = new CPlaneStressMaterial[size];
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::AllocateMaterial." << std::endl;
             exit(5);
@@ -106,47 +116,58 @@ bool CElementGroup::Read(ifstream& Input)
 {
     Input >> (int&)ElementType_ >> NUME_ >> NUMMAT_;
     
+    cout << "Element Type: " << ElementType_ << ", NUME: " << NUME_ 
+         << ", NUMMAT: " << NUMMAT_ << endl;
+    
     CalculateMemberSize();
 
-//  Read material/section property lines
+    //  Read material/section property lines
     AllocateMaterials(NUMMAT_);
     
-//  Loop over for all material property sets in this element group
+    //  Loop over for all material property sets in this element group
     for (unsigned int mset = 0; mset < NUMMAT_; mset++)
     {
+        cout << "Reading material set " << mset + 1 << endl;
+        
         GetMaterial(mset).Read(Input);
   
         if (GetMaterial(mset).nset != mset + 1)
         {
             cerr << "*** Error *** Material sets must be inputted in order !" << endl
-            << "    Expected set : " << mset + 1 << endl
-            << "    Provided set : " << GetMaterial(mset).nset << endl;
+                 << "    Expected set : " << mset + 1 << endl
+                 << "    Provided set : " << GetMaterial(mset).nset << endl;
         
             return false;
         }
     }
 
-//  Read element data lines
+    //  Read element data lines
     AllocateElements(NUME_);
     
-//  Loop over for all elements in this element group
+    //  Loop over for all elements in this element group
     for (unsigned int Ele = 0; Ele < NUME_; Ele++)
     {
         unsigned int N;
         
         Input >> N;    // element number
         
+        cout << "Reading element " << N << endl;
+        
         if (N != Ele + 1)
         {
             cerr << "*** Error *** Elements must be inputted in order !" << endl
-            << "    Expected element : " << Ele + 1 << endl
-            << "    Provided element : " << N << endl;
+                 << "    Expected element : " << Ele + 1 << endl
+                 << "    Provided element : " << N << endl;
             
             return false;
         }
 
-        if (!(*this)[Ele].Read(Input, MaterialList_, NodeList_))
+        if (!(*this)[Ele].Read(Input, MaterialList_, NodeList_)) {
+            cerr << "*** Error *** Failed to read element " << N << endl;
             return false;
+        }
+        
+        cout << "Successfully read element " << N << endl;
     }
 
     return true;

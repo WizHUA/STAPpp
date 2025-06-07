@@ -1,0 +1,232 @@
+TITLE : T3 Patch Test - Pure Shear
+        (23:5:30 on June 7, 2025, Saturday)
+
+C O N T R O L   I N F O R M A T I O N
+
+      NUMBER OF NODAL POINTS . . . . . . . . . . (NUMNP)  =     4
+      NUMBER OF ELEMENT GROUPS . . . . . . . . . (NUMEG)  =     1
+      NUMBER OF LOAD CASES . . . . . . . . . . . (NLCASE) =     1
+      SOLUTION MODE  . . . . . . . . . . . . . . (MODEX)  =     1
+         EQ.0, DATA CHECK
+         EQ.1, EXECUTION
+
+ N O D A L   P O I N T   D A T A
+
+    NODE       BOUNDARY                         NODAL POINT
+   NUMBER  CONDITION  CODES                     COORDINATES
+        1    1    1    1       0.00000e+00    0.00000e+00    0.00000e+00
+        2    0    1    1       1.00000e+00    0.00000e+00    0.00000e+00
+        3    0    0    1       1.00000e+00    1.00000e+00    0.00000e+00
+        4    1    0    1       0.00000e+00    1.00000e+00    0.00000e+00
+
+ EQUATION NUMBERS
+
+   NODE NUMBER   DEGREES OF FREEDOM
+        N           X    Y    Z
+        1           0    0    0
+        2           1    0    0
+        3           2    3    0
+        4           0    4    0
+
+ L O A D   C A S E   D A T A
+
+     LOAD CASE NUMBER . . . . . . . =     1
+     NUMBER OF CONCENTRATED LOADS . =     2
+
+    NODE       DIRECTION      LOAD
+   NUMBER                   MAGNITUDE
+      3            2        1.00000e+02
+      4            2       -1.00000e+02
+
+Reading element group 1
+Element Type: 3, NUME: 2, NUMMAT: 1
+Reading material set 1
+Reading element 1
+T3 Element nodes: 1, 2, 3, Material: 1
+  Node coordinates: (0.00000e+00,0.00000e+00) (1.00000e+00,0.00000e+00) (1.00000e+00,1.00000e+00) 
+Material properties: E=2.10000e+05, nu=3.00000e-01, t=1.00000e+00
+Shape function coefficients (after no swap):
+  Final coordinates: (0.00000e+00,0.00000e+00), (1.00000e+00,0.00000e+00), (1.00000e+00,1.00000e+00)
+  a: [1.00000e+00, 0.00000e+00, 0.00000e+00]
+  b: [-1.00000e+00, 1.00000e+00, 0.00000e+00]
+  c: [0.00000e+00, -1.00000e+00, 1.00000e+00]
+  Area: 5.00000e-01, sum(a): 1.00000e+00, det: 1.00000e+00
+Area calculated: 5.00000e-01
+T3 Location Matrix: 0 0 1 0 2 3 
+Node boundary codes: Node1:[0,0] Node2:[1,0] Node3:[2,3] 
+Location matrix generated successfully.
+Successfully read element 1
+Reading element 2
+T3 Element nodes: 1, 3, 4, Material: 1
+  Node coordinates: (0.00000e+00,0.00000e+00) (1.00000e+00,1.00000e+00) (0.00000e+00,1.00000e+00) 
+Material properties: E=2.10000e+05, nu=3.00000e-01, t=1.00000e+00
+Shape function coefficients (after no swap):
+  Final coordinates: (0.00000e+00,0.00000e+00), (1.00000e+00,1.00000e+00), (0.00000e+00,1.00000e+00)
+  a: [1.00000e+00, 0.00000e+00, 0.00000e+00]
+  b: [0.00000e+00, 1.00000e+00, -1.00000e+00]
+  c: [-1.00000e+00, 0.00000e+00, 1.00000e+00]
+  Area: 5.00000e-01, sum(a): 1.00000e+00, det: 1.00000e+00
+Area calculated: 5.00000e-01
+T3 Location Matrix: 0 0 2 3 0 4 
+Node boundary codes: Node1:[0,0] Node2:[2,3] Node3:[0,4] 
+Location matrix generated successfully.
+Successfully read element 2
+Successfully read element group 1
+ E L E M E N T   G R O U P   D A T A
+
+
+ E L E M E N T   D E F I N I T I O N
+
+ ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ) . . =    3
+     EQ.1, TRUSS ELEMENTS
+     EQ.2, ELEMENTS CURRENTLY
+     EQ.3, NOT AVAILABLE
+
+ NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ) . . =    2
+
+    T3 ELEMENT INFORMATION:
+    ELEMENT     NODE    NODE    NODE    MATERIAL
+    NUMBER      I       J       K      SET NUMBER
+        1    1        2        3           1
+        2    1        3        4           1
+
+   Ele =        Location Matrix
+T3 Location Matrix: 0 0 1 0 2 3 
+Node boundary codes: Node1:[0,0] Node2:[1,0] Node3:[2,3] 
+        1    0    0    1    0    2    3
+T3 Location Matrix: 0 0 2 3 0 4 
+Node boundary codes: Node1:[0,0] Node2:[2,3] Node3:[0,4] 
+        2    0    0    2    3    0    4
+
+*** _Debug_ *** Column Heights
+       0       1       2       2
+
+*** _Debug_ *** Address of Diagonal Element
+       1       2       4       7      10
+
+	TOTAL SYSTEM DATA
+
+     NUMBER OF EQUATIONS . . . . . . . . . . . . . .(NEQ) = 4
+     NUMBER OF MATRIX ELEMENTS . . . . . . . . . . .(NWK) = 9
+     MAXIMUM HALF BANDWIDTH  . . . . . . . . . . . .(MK ) = 3
+     MEAN HALF BANDWIDTH . . . . . . . . . . . . . .(MM ) = 2
+
+
+Shape function coefficients (after no swap):
+  Final coordinates: (0.00000e+00,0.00000e+00), (1.00000e+00,0.00000e+00), (1.00000e+00,1.00000e+00)
+  a: [1.00000e+00, 0.00000e+00, 0.00000e+00]
+  b: [-1.00000e+00, 1.00000e+00, 0.00000e+00]
+  c: [0.00000e+00, -1.00000e+00, 1.00000e+00]
+  Area: 5.00000e-01, sum(a): 1.00000e+00, det: 1.00000e+00
+T3 stiffness matrix calculation:
+  Area: 5.00000e-01, Thickness: 1.00000e+00, Volume: 5.00000e-01
+  Material: E=2.10000e+05, nu=3.00000e-01, factor=2.30769e+05
+  B matrix:
+    [-1.000000e+000.000000e+001.000000e+000.000000e+000.000000e+000.000000e+00]
+    [0.000000e+000.000000e+000.000000e+00-1.000000e+000.000000e+001.000000e+00]
+    [0.000000e+00-1.000000e+00-1.000000e+001.000000e+001.000000e+000.000000e+00]
+  K[0][0] = 1.153846e+05
+  K[0][1] = 0.000000e+00
+  K[1][1] = 4.038462e+04
+Shape function coefficients (after no swap):
+  Final coordinates: (0.000000e+00,0.000000e+00), (1.000000e+00,1.000000e+00), (0.000000e+00,1.000000e+00)
+  a: [1.000000e+00, 0.000000e+00, 0.000000e+00]
+  b: [0.000000e+00, 1.000000e+00, -1.000000e+00]
+  c: [-1.000000e+00, 0.000000e+00, 1.000000e+00]
+  Area: 5.000000e-01, sum(a): 1.000000e+00, det: 1.000000e+00
+T3 stiffness matrix calculation:
+  Area: 5.000000e-01, Thickness: 1.000000e+00, Volume: 5.000000e-01
+  Material: E=2.100000e+05, nu=3.000000e-01, factor=2.307692e+05
+  B matrix:
+    [0.000000e+000.000000e+001.000000e+000.000000e+00-1.000000e+000.000000e+00]
+    [0.000000e+00-1.000000e+000.000000e+000.000000e+000.000000e+001.000000e+00]
+    [-1.000000e+000.000000e+000.000000e+001.000000e+001.000000e+00-1.000000e+00]
+  K[0][0] = 4.038462e+04
+  K[0][1] = 0.000000e+00
+  K[1][1] = 1.153846e+05
+*** _Debug_ *** Banded stiffness matrix
+  -1.15385e+05   0.00000e+00  -4.03846e+04  -7.50000e+04   0.00000e+00  -1.15385e+05
+   4.03846e+04   3.46154e+04  -4.03846e+04
+
+*** _Debug_ *** Full stiffness matrix
+  -1.15385e+05  -4.03846e+04  -1.15385e+05   0.00000e+00
+  -4.03846e+04   0.00000e+00   0.00000e+00  -4.03846e+04
+  -1.15385e+05   0.00000e+00  -7.50000e+04   3.46154e+04
+   0.00000e+00  -4.03846e+04   3.46154e+04   4.03846e+04
+
+*** _Debug_ *** Banded stiffness matrix
+  -1.15385e+05   1.41346e+04   3.50000e-01  -7.50000e+04   2.85714e+00   1.00000e+00
+   2.25000e+05  -2.00000e+00  -2.85714e+00
+
+*** _Debug_ *** Full stiffness matrix
+  -1.15385e+05   3.50000e-01   1.00000e+00   0.00000e+00
+   3.50000e-01   1.41346e+04   2.85714e+00  -2.85714e+00
+   1.00000e+00   2.85714e+00  -7.50000e+04  -2.00000e+00
+   0.00000e+00  -2.85714e+00  -2.00000e+00   2.25000e+05
+
+ LOAD CASE    1
+
+
+*** _Debug_ *** Displacement vector
+  -4.44444e-04   2.53968e-03  -4.44444e-04   4.44444e-04
+
+ D I S P L A C E M E N T S
+
+  NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT
+    1               0.00000e+00       0.00000e+00       0.00000e+00
+    2              -4.44444e-04       0.00000e+00       0.00000e+00
+    3               2.53968e-03      -4.44444e-04       0.00000e+00
+    4               0.00000e+00       4.44444e-04       0.00000e+00
+
+ S T R E S S  C A L C U L A T I O N S  F O R  E L E M E N T  G R O U P    1
+
+  ELEMENT       STRESS_XX       STRESS_YY       STRESS_XY
+  NUMBER
+Shape function coefficients (after no swap):
+  Final coordinates: (0.00000e+00,0.00000e+00), (1.00000e+00,0.00000e+00), (1.00000e+00,1.00000e+00)
+  a: [1.00000e+00, 0.00000e+00, 0.00000e+00]
+  b: [-1.00000e+00, 1.00000e+00, 0.00000e+00]
+  c: [0.00000e+00, -1.00000e+00, 1.00000e+00]
+  Area: 5.00000e-01, sum(a): 1.00000e+00, det: 1.00000e+00
+T3 Element stress calculation:
+  Material: E=2.10000e+05, nu=3.00000e-01, factor=2.30769e+05
+  Area: 5.00000e-01, inv_2A=1.00000e+00
+  LocationMatrix: [0 0 1 0 2 3 ]
+  Displacements: [0.000000e+00 0.000000e+00 -4.444444e-04 0.000000e+00 2.539683e-03 -4.444444e-04 ]
+  Strains: [-4.444444e-04, -4.444444e-04, 2.984127e-03]
+  Stresses: [-1.333333e+02, -1.333333e+02, 2.410256e+02]
+  B matrix verification:
+    [-1.000000e+000.000000e+001.000000e+000.000000e+000.000000e+000.000000e+00]
+    [0.000000e+000.000000e+000.000000e+00-1.000000e+000.000000e+001.000000e+00]
+    [0.000000e+00-1.000000e+00-1.000000e+001.000000e+001.000000e+000.000000e+00]
+  Element coordinates: (0.000000e+00,0.000000e+00) (1.000000e+00,0.000000e+00) (1.000000e+00,1.000000e+00) 
+    1   -1.333333e+02   -1.333333e+02    2.410256e+02
+Shape function coefficients (after no swap):
+  Final coordinates: (0.000000e+00,0.000000e+00), (1.000000e+00,1.000000e+00), (0.000000e+00,1.000000e+00)
+  a: [1.000000e+00, 0.000000e+00, 0.000000e+00]
+  b: [0.000000e+00, 1.000000e+00, -1.000000e+00]
+  c: [-1.000000e+00, 0.000000e+00, 1.000000e+00]
+  Area: 5.000000e-01, sum(a): 1.000000e+00, det: 1.000000e+00
+T3 Element stress calculation:
+  Material: E=2.100000e+05, nu=3.000000e-01, factor=2.307692e+05
+  Area: 5.000000e-01, inv_2A=1.000000e+00
+  LocationMatrix: [0 0 2 3 0 4 ]
+  Displacements: [0.000000e+00 0.000000e+00 2.539683e-03 -4.444444e-04 0.000000e+00 4.444444e-04 ]
+  Strains: [2.539683e-03, 4.444444e-04, -8.888889e-04]
+  Stresses: [6.168498e+02, 2.783883e+02, -7.179487e+01]
+  B matrix verification:
+    [0.000000e+000.000000e+001.000000e+000.000000e+00-1.000000e+000.000000e+00]
+    [0.000000e+00-1.000000e+000.000000e+000.000000e+000.000000e+001.000000e+00]
+    [-1.000000e+000.000000e+000.000000e+001.000000e+001.000000e+00-1.000000e+00]
+  Element coordinates: (0.000000e+00,0.000000e+00) (1.000000e+00,1.000000e+00) (0.000000e+00,1.000000e+00) 
+    2    6.168498e+02    2.783883e+02   -7.179487e+01
+
+
+ S O L U T I O N   T I M E   L O G   I N   S E C 
+
+     TIME FOR INPUT PHASE = 0.000000e+00
+     TIME FOR CALCULATION OF STIFFNESS MATRIX = 0.000000e+00
+     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = 0.000000e+00
+
+     T O T A L   S O L U T I O N   T I M E = 0.000000e+00
+

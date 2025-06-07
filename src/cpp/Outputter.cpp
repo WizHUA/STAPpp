@@ -161,6 +161,9 @@ void COutputter::OutputElementInfo()
 			case ElementTypes::Bar: // Bar element
 				OutputBarElements(EleGrp);
 				break;
+			case ElementTypes::T3: // T3 element
+				OutputT3Elements(EleGrp);
+				break;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
 		        break;
@@ -211,6 +214,29 @@ void COutputter::OutputBarElements(unsigned int EleGrp)
     }
 
 	*this << endl;
+}
+
+//  Output T3 element data
+//  Output T3 element data
+void COutputter::OutputT3Elements(unsigned int EleGrp)
+{
+    CDomain* FEMData = CDomain::GetInstance();
+    CElementGroup& ElementGroup = FEMData->GetEleGrpList()[EleGrp];
+    
+    *this << "    T3 ELEMENT INFORMATION:" << endl;
+    *this << "    ELEMENT     NODE    NODE    NODE    MATERIAL" << endl;
+    *this << "    NUMBER      I       J       K      SET NUMBER" << endl;
+    
+    unsigned int NUME = ElementGroup.GetNUME();
+    
+    for (unsigned int i = 0; i < NUME; i++)
+    {
+        *this << setw(9) << i+1;  // 输出单元编号（从1开始）
+        CElement& Element = ElementGroup[i];
+        Element.Write(*this);
+    }
+    
+    *this << endl;
 }
 
 //	Print load data
@@ -297,7 +323,27 @@ void COutputter::OutputElementStress()
 				*this << endl;
 
 				break;
-
+				
+			case ElementTypes::T3: // T3 element
+				*this << "  ELEMENT       STRESS_XX       STRESS_YY       STRESS_XY" << endl
+					<< "  NUMBER" << endl;
+					
+				double stresses[3]; // [xx, yy, xy]
+				
+				for (unsigned int Ele = 0; Ele < NUME; Ele++)
+				{
+					CElement& Element = EleGrp[Ele];
+					Element.ElementStress(stresses, Displacement);
+					
+					*this << setw(5) << Ele + 1 
+						<< setw(16) << stresses[0] 
+						<< setw(16) << stresses[1]
+						<< setw(16) << stresses[2] << endl;
+				}
+				
+				*this << endl;
+				break;
+				
 			default: // Invalid element type
 				cerr << "*** Error *** Elment type " << ElementType
 					<< " has not been implemented.\n\n";

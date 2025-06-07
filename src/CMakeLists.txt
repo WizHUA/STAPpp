@@ -17,3 +17,4 @@ source_group(SOURCE\ FILES FILES ${SRC})
 source_group(HEADER\ FILES FILES ${HEAD})
 
 ADD_EXECUTABLE(stap++ ${SRC} ${HEAD})
+ADD_DEFINITIONS(-D_DEBUG_)

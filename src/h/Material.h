@@ -52,3 +52,21 @@ public:
 //!	Write material data to Stream
 	virtual void Write(COutputter& output);
 };
+
+//! Material class for T3 element (plane stress)
+class CPlaneStressMaterial : public CMaterial
+{
+public:
+    // 使用基类的E
+    double nu; // Poisson's ratio
+    double t;  // Thickness
+
+    //! Constructor
+    CPlaneStressMaterial() : nu(0.0), t(1.0) { E = 0.0; } // 使用基类的E
+
+    //! Read material data from stream Input
+    virtual bool Read(ifstream& Input);
+
+    //! Write material data to Stream
+    virtual void Write(COutputter& output);
+};

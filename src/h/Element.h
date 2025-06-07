@@ -66,9 +66,22 @@ public:
     virtual void GenerateLocationMatrix()
     {
         unsigned int i = 0;
-        for (unsigned int N = 0; N < NEN_; N++)
-            for (unsigned int D = 0; D < CNode::NDF; D++)
+        for (unsigned int N = 0; N < NEN_; N++) {
+            // 添加安全检查
+            if (nodes_[N] == nullptr) {
+                cerr << "*** Error *** Node " << N << " is null in GenerateLocationMatrix." << endl;
+                exit(-1);
+            }
+            
+            for (unsigned int D = 0; D < CNode::NDF; D++) {
+                if (i >= ND_) {
+                    cerr << "*** Error *** Index out of bounds in GenerateLocationMatrix: " 
+                        << i << " >= " << ND_ << endl;
+                    exit(-1);
+                }
                 LocationMatrix_[i++] = nodes_[N]->bcode[D];
+            }
+        }
     }
 
 //! Return the size of the element stiffness matrix (stored as an array column by column)
