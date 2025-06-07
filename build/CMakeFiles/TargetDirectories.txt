@@ -1,0 +1,3 @@
+/home/wiz/WorkSpace/STAPpp/build/CMakeFiles/stap++.dir
+/home/wiz/WorkSpace/STAPpp/build/CMakeFiles/edit_cache.dir
+/home/wiz/WorkSpace/STAPpp/build/CMakeFiles/rebuild_cache.dir
