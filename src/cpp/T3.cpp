@@ -21,6 +21,10 @@ using namespace std;
 //! Constructor
 CT3::CT3()
 {
+    cerr << "*** T3 CONSTRUCTOR CALLED ***" << endl;
+    cerr.flush();
+    
+    NEN_ = 3;
     NEN_ = 3;    // 每个单元有3个节点
     nodes_ = new CNode*[NEN_];
     
@@ -49,6 +53,9 @@ CT3::~CT3()
 //! Read element data from stream Input
 bool CT3::Read(ifstream& Input, CMaterial* MaterialSets, CNode* NodeList)
 {
+    cerr << "*** T3::Read() CALLED ***" << endl;
+    cerr.flush();
+
     unsigned int MSet;        // Material property set number
     unsigned int N1, N2, N3;  // Node numbers
 
@@ -110,13 +117,16 @@ bool CT3::Read(ifstream& Input, CMaterial* MaterialSets, CNode* NodeList)
 
     // 计算形函数系数
     CalculateShapeFuncCoef();
-    
-    cout << "Area calculated: " << area << endl;
-    
-    // 生成位置矩阵
+
+    // 在形函数系数计算后生成位置矩阵
     GenerateLocationMatrix();
     
-    cout << "Location matrix generated successfully." << endl;
+    cout << "Final Area: " << area << endl;
+    cout << "Final LocationMatrix: ";
+    for (unsigned int i = 0; i < ND_; i++) {
+        cout << LocationMatrix_[i] << " ";
+    }
+    cout << endl;
     
     return true;
 }
@@ -130,7 +140,7 @@ void CT3::Write(COutputter& output)
            << setw(12) << ElementMaterial_->nset << endl;
 }
 
-//! Generate location matrix for T3 element (only x and y DOFs) - 修正版
+//! Generate location matrix for T3 element (only x and y DOFs)
 void CT3::GenerateLocationMatrix()
 {
     unsigned int i = 0;
@@ -170,45 +180,50 @@ void CT3::GenerateLocationMatrix()
     cout << endl;
 }
 
-//! Calculate coefficients of shape functions - 最终修正版
+//! Calculate coefficients of shape functions - 完全修正版
 void CT3::CalculateShapeFuncCoef()
 {
-    // 获取节点坐标
     double x1 = nodes_[0]->XYZ[0], y1 = nodes_[0]->XYZ[1];
     double x2 = nodes_[1]->XYZ[0], y2 = nodes_[1]->XYZ[1];
     double x3 = nodes_[2]->XYZ[0], y3 = nodes_[2]->XYZ[1];
     
-    // 使用标准的三角形面积公式计算面积（确保数值稳定性）
+    // 计算2倍面积的行列式
     double det = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
-    area = abs(det) / 2.0;
     
-    if (area < 1e-12) {
-        cerr << "*** Error *** T3 element has zero or negative area!" << endl;
-        cout << "    Coordinates: (" << x1 << "," << y1 << "), (" 
-             << x2 << "," << y2 << "), (" << x3 << "," << y3 << ")" << endl;
-        cout << "    Determinant: " << det << endl;
-        return;
-    }
+    cout << "Original coordinates and det:" << endl;
+    cout << "  P1(" << x1 << "," << y1 << "), P2(" << x2 << "," << y2 << "), P3(" << x3 << "," << y3 << ")" << endl;
+    cout << "  det = " << det << endl;
     
-    // 检查节点顺序，如果是顺时针则交换
-    bool need_swap = false;
+    // 🔧 关键修复：确保逆时针节点顺序
+    bool node_swapped = false;
     if (det < 0) {
-        cout << "*** Warning *** Element has clockwise orientation, swapping nodes 2 and 3" << endl;
-        // 交换节点2和节点3
+        cout << "*** Warning *** Clockwise element detected, swapping nodes 2&3..." << endl;
+        
+        // 物理交换节点指针
         CNode* temp = nodes_[1];
         nodes_[1] = nodes_[2];
         nodes_[2] = temp;
+        node_swapped = true;
         
-        // 重新计算坐标和面积
+        // 重新获取坐标
         x2 = nodes_[1]->XYZ[0]; y2 = nodes_[1]->XYZ[1];
         x3 = nodes_[2]->XYZ[0]; y3 = nodes_[2]->XYZ[1];
+        
+        // 重新计算行列式
         det = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
-        area = det / 2.0;  // 现在应该是正值
-        need_swap = true;
+        
+        cout << "After swap: P1(" << x1 << "," << y1 << "), P2(" << x2 << "," << y2 << "), P3(" << x3 << "," << y3 << ")" << endl;
+        cout << "After swap: det = " << det << endl;
     }
     
-    // 计算形函数系数（标准公式）
-    // 对于逆时针排列的节点(x1,y1), (x2,y2), (x3,y3)：
+    area = det / 2.0;
+    
+    if (area <= 1e-12) {
+        cerr << "*** Error *** Invalid area: " << area << endl;
+        return;
+    }
+    
+    // 使用标准公式计算形函数系数（现在节点已经是逆时针）
     a[0] = x2 * y3 - x3 * y2;
     b[0] = y2 - y3;
     c[0] = x3 - x2;
@@ -220,30 +235,23 @@ void CT3::CalculateShapeFuncCoef()
     a[2] = x1 * y2 - x2 * y1;
     b[2] = y1 - y2;
     c[2] = x2 - x1;
-    
-    // 验证形函数系数的正确性
-    double sum_a = a[0] + a[1] + a[2];
-    double expected_sum = 2.0 * area;
-    
-    if (abs(sum_a - expected_sum) > 1e-10) {
-        cerr << "*** Error *** Shape function coefficient validation failed!" << endl;
-        cout << "    sum(a) = " << sum_a << ", expected 2*area = " << expected_sum << endl;
-        cout << "    Difference = " << abs(sum_a - expected_sum) << endl;
-        cout << "    Area = " << area << ", det = " << det << endl;
-    }
 
-#ifdef _DEBUG_
-    cout << "Shape function coefficients (after " << (need_swap ? "node swap" : "no swap") << "):" << endl;
-    cout << "  Final coordinates: (" << x1 << "," << y1 << "), (" << x2 << "," << y2 << "), (" << x3 << "," << y3 << ")" << endl;
-    cout << "  a: [" << a[0] << ", " << a[1] << ", " << a[2] << "]" << endl;
-    cout << "  b: [" << b[0] << ", " << b[1] << ", " << b[2] << "]" << endl;
-    cout << "  c: [" << c[0] << ", " << c[1] << ", " << c[2] << "]" << endl;
-    cout << "  Area: " << area << ", sum(a): " << sum_a << ", det: " << det << endl;
-#endif
-
-    // 如果交换了节点，需要重新生成位置矩阵
-    if (need_swap) {
-        cout << "Regenerating location matrix after node swap..." << endl;
+    cout << "Shape function coefficients:" << endl;
+    cout << "  Area: " << area << endl;
+    cout << "  a coefficients: [" << a[0] << ", " << a[1] << ", " << a[2] << "]" << endl;
+    cout << "  b coefficients: [" << b[0] << ", " << b[1] << ", " << b[2] << "]" << endl;
+    cout << "  c coefficients: [" << c[0] << ", " << c[1] << ", " << c[2] << "]" << endl;
+    
+    // 验证B矩阵主要元素的符号（这些可能为负，是正常的）
+    double inv_2A = 1.0 / (2.0 * area);
+    cout << "  B[0][0] = b[0]/(2*area) = " << b[0] * inv_2A << endl;
+    cout << "  B[0][2] = b[1]/(2*area) = " << b[1] * inv_2A << endl;
+    cout << "  B[1][1] = c[0]/(2*area) = " << c[0] * inv_2A << endl;
+    cout << "  B[1][3] = c[1]/(2*area) = " << c[1] * inv_2A << endl;
+    
+    // 🔧 关键：如果交换了节点，重新生成LocationMatrix
+    if (node_swapped) {
+        cout << "Regenerating LocationMatrix after node swap..." << endl;
         GenerateLocationMatrix();
     }
 }
@@ -254,7 +262,7 @@ double CT3::CalculateArea()
     return area;
 }
 
-//! Calculate element stiffness matrix - 最终修正版
+//! Calculate element stiffness matrix - 最终修复版：按列存储兼容STAPpp
 void CT3::ElementStiffness(double* Matrix)
 {
     // 清零刚度矩阵
@@ -272,97 +280,107 @@ void CT3::ElementStiffness(double* Matrix)
     double E = material->E;
     double nu = material->nu;
     
-    // 重新计算形函数系数，确保最新
-    CalculateShapeFuncCoef();
-    
+    // 确保形函数系数是最新的
     if (area <= 0) {
-        cerr << "*** Error *** Invalid element area: " << area << endl;
+        cerr << "*** Error *** Invalid element area in ElementStiffness: " << area << endl;
         return;
     }
     
-    // 构建平面应力弹性矩阵D
+    // 🔧 关键修复：构建平面应力弹性矩阵D
     double factor = E / (1.0 - nu * nu);
-    double D[3][3];
+    double D[3][3] = {{0.0}};  // 初始化为0
     
-    D[0][0] = factor;                       
-    D[0][1] = factor * nu;                  
+    D[0][0] = factor;                       // E/(1-ν²)
+    D[0][1] = factor * nu;                  // Eν/(1-ν²)
     D[0][2] = 0.0;
     
-    D[1][0] = factor * nu;                  
-    D[1][1] = factor;                       
+    D[1][0] = factor * nu;                  // Eν/(1-ν²)
+    D[1][1] = factor;                       // E/(1-ν²)
     D[1][2] = 0.0;
     
     D[2][0] = 0.0;
     D[2][1] = 0.0;
-    D[2][2] = factor * (1.0 - nu) / 2.0;   
+    D[2][2] = factor * (1.0 - nu) / 2.0;   // G = E/[2(1+ν)]
     
-    // 构建应变-位移矩阵B
-    double B[3][6];
+    // 🔧 关键修复：构建应变-位移矩阵B
+    double B[3][6] = {{0.0}};  // 初始化为0
     double inv_2A = 1.0 / (2.0 * area);
     
-    // 按照标准公式构造B矩阵
     for (unsigned int i = 0; i < 3; i++) {
-        // εxx = ∂u/∂x 行
+        // 第1行：εxx = ∂u/∂x
         B[0][2*i]   = b[i] * inv_2A;     
         B[0][2*i+1] = 0.0;
         
-        // εyy = ∂v/∂y 行
+        // 第2行：εyy = ∂v/∂y
         B[1][2*i]   = 0.0;
         B[1][2*i+1] = c[i] * inv_2A;     
         
-        // γxy = ∂u/∂y + ∂v/∂x 行
+        // 第3行：γxy = ∂u/∂y + ∂v/∂x
         B[2][2*i]   = c[i] * inv_2A;     
         B[2][2*i+1] = b[i] * inv_2A;     
     }
     
-    // 计算单元刚度矩阵：K = t*A*B^T*D*B
+    // 🔧 关键修复：计算 DB = D * B
+    double DB[3][6] = {{0.0}};  // 初始化为0
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 6; j++) {
+            for (int k = 0; k < 3; k++) {
+                DB[i][j] += D[i][k] * B[k][j];
+            }
+        }
+    }
+    
+    // 🚀 最终修复：按列存储兼容STAPpp Assembly
+    // STAPpp期望每列从上到下存储：K[0][j], K[1][j], ..., K[j][j]
+    unsigned int index = 0;
     double volume = thickness * area;
     
-    // 使用更稳定的计算方法
-    for (unsigned int i = 0; i < 6; i++) {
-        for (unsigned int j = i; j < 6; j++) {  
+    for (unsigned int j = 0; j < 6; j++) {          // 外层循环：列
+        for (unsigned int i = j; i >= 0 && i <= j; i--) {  // 内层循环：从对角线向上
             double sum = 0.0;
             
-            // K[i][j] = volume * sum_k(sum_l(B[k][i] * D[k][l] * B[l][j]))
+            // 计算 K[i][j] = B^T[i] * DB[j]
             for (int k = 0; k < 3; k++) {
-                for (int l = 0; l < 3; l++) {
-                    sum += B[k][i] * D[k][l] * B[l][j];
-                }
+                sum += B[k][i] * DB[k][j];
             }
             
-            // STAPpp上三角矩阵存储格式
-            unsigned int index = j * (j + 1) / 2 + i;
-            if (index < size) {
-                Matrix[index] = sum * volume;
-            }
-            else {
-                cerr << "*** Error *** Stiffness matrix index overflow" << endl;
-                return;
+            Matrix[index] = sum * volume;
+            index++;
+            
+            if (i == 0) break;  // 防止无符号数下溢
+        }
+    }
+    
+    // 验证存储格式
+    cout << "\n=== STAPpp兼容存储格式验证 ===" << endl;
+    index = 0;
+    for (unsigned int j = 0; j < 6; j++) {
+        cout << "第" << j << "列 (对角元素先): ";
+        for (unsigned int i = j; i >= 0 && i <= j; i--) {
+            cout << "K[" << i << "][" << j << "]=" << setprecision(3) << Matrix[index] << " ";
+            index++;
+            if (i == 0) break;
+        }
+        cout << endl;
+    }
+    
+    // 验证Assembly兼容性
+    cout << "\n=== Assembly兼容性验证（修复后）===" << endl;
+    for (unsigned int j = 0; j < 3; j++) {
+        unsigned int DiagjElement = (j+1)*j/2;
+        cout << "第" << j << "列对角元素位置: " << DiagjElement << endl;
+        
+        for (unsigned int i = 0; i <= j; i++) {
+            unsigned int assemblyIndex = DiagjElement + j - i;
+            if (assemblyIndex < size) {
+                cout << "  Assembly: K[" << i << "][" << j << "] 从 Matrix[" 
+                     << assemblyIndex << "] = " << Matrix[assemblyIndex] << endl;
             }
         }
     }
-
-#ifdef _DEBUG_
-    cout << "T3 stiffness matrix calculation:" << endl;
-    cout << "  Area: " << area << ", Thickness: " << thickness << ", Volume: " << volume << endl;
-    cout << "  Material: E=" << E << ", nu=" << nu << ", factor=" << factor << endl;
-    
-    cout << "  B matrix:" << endl;
-    for (int i = 0; i < 3; i++) {
-        cout << "    [";
-        for (int j = 0; j < 6; j++) {
-            cout << setw(12) << setprecision(6) << B[i][j];
-        }
-        cout << "]" << endl;
-    }
-    
-    cout << "  K[0][0] = " << Matrix[0] << endl;
-    cout << "  K[0][1] = " << Matrix[1] << endl;
-    cout << "  K[1][1] = " << Matrix[2] << endl;
-#endif
 }
 
-//! Calculate element stress - 最终修正版
+//! Calculate element stress - 与刚度矩阵保持一致
 void CT3::ElementStress(double* stress, double* Displacement)
 {
     // 初始化应力数组
@@ -383,9 +401,6 @@ void CT3::ElementStress(double* stress, double* Displacement)
     
     double E = material->E;
     double nu = material->nu;
-    
-    // 确保几何参数是最新的
-    CalculateShapeFuncCoef();
     
     if (area <= 0) {
         cerr << "*** Error *** Invalid area in stress calculation: " << area << endl;
@@ -423,12 +438,11 @@ void CT3::ElementStress(double* stress, double* Displacement)
         B[2][2*i+1] = b[i] * inv_2A;
     }
     
-    // 提取单元节点位移向量（关键修正：增加验证）
+    // 提取单元节点位移向量
     double d[6] = {0.0};
     
     for (unsigned int i = 0; i < 6; i++) {
         if (LocationMatrix_[i] > 0) {
-            // 验证索引范围
             unsigned int disp_index = LocationMatrix_[i] - 1;
             d[i] = Displacement[disp_index];
         }
@@ -450,36 +464,12 @@ void CT3::ElementStress(double* stress, double* Displacement)
         }
     }
 
-#ifdef _DEBUG_
     cout << "T3 Element stress calculation:" << endl;
-    cout << "  Material: E=" << E << ", nu=" << nu << ", factor=" << factor << endl;
-    cout << "  Area: " << area << ", inv_2A=" << inv_2A << endl;
-    cout << "  LocationMatrix: [";
-    for (int k = 0; k < 6; k++) cout << LocationMatrix_[k] << " ";
-    cout << "]" << endl;
     cout << "  Displacements: [";
-    for (int k = 0; k < 6; k++) cout << setw(12) << setprecision(6) << d[k] << " ";
+    for (int k = 0; k < 6; k++) cout << setw(10) << setprecision(6) << d[k] << " ";
     cout << "]" << endl;
     cout << "  Strains: [" << setw(12) << strain[0] << ", " << setw(12) << strain[1] 
          << ", " << setw(12) << strain[2] << "]" << endl;
     cout << "  Stresses: [" << setw(12) << stress[0] << ", " << setw(12) << stress[1] 
          << ", " << setw(12) << stress[2] << "]" << endl;
-    
-    // 详细验证B矩阵
-    cout << "  B matrix verification:" << endl;
-    for (int i = 0; i < 3; i++) {
-        cout << "    [";
-        for (int j = 0; j < 6; j++) {
-            cout << setw(12) << setprecision(6) << B[i][j];
-        }
-        cout << "]" << endl;
-    }
-    
-    // 验证坐标
-    cout << "  Element coordinates: ";
-    for (unsigned int i = 0; i < 3; i++) {
-        cout << "(" << nodes_[i]->XYZ[0] << "," << nodes_[i]->XYZ[1] << ") ";
-    }
-    cout << endl;
-#endif
 }

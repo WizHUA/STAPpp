@@ -149,7 +149,8 @@ void COutputter::OutputElementInfo()
 			  << ElementType << endl;
 		*this << "     EQ.1, TRUSS ELEMENTS" << endl
 			  << "     EQ.2, ELEMENTS CURRENTLY" << endl
-			  << "     EQ.3, NOT AVAILABLE" << endl
+			  << "     EQ.3, T3 ELEMENTS" << endl
+			  << "     EQ.4, NOT AVAILABLE" << endl
 			  << endl;
 
 		*this << " NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ) . . =" << setw(5) << NUME
