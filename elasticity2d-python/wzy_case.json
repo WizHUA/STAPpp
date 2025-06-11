@@ -1,0 +1,13 @@
+{
+    "Title": "WZY Case using Q4 Elements",
+    "nsd": 2, "ndof": 2, "nnp": 4, "nel": 1, "nen": 4,
+    "E": 30000000.0, "nu": 0.3, "ngp": 2, "nd": 4, "nbe": 0,
+    "flags": [2, 0, 0, 2, 0, 0, 2, 2],
+    "P": [[0], [0], [0], [-20], [0], [-20], [0], [0]],
+    "plane_strain": 0,
+    "plot_mesh": "yes", "plot_disp": "yes", "plot_stress_xx": "yes",
+    "plot_mises": "yes", "plot_nod": "yes", "fact": 1000000,
+    "x": [0.0, 2.0, 2.0, 0.0],
+    "y": [0.0, 0.5, 1.0, 1.0],
+    "IEN": [[1], [2], [3], [4]]
+}

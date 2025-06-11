@@ -286,42 +286,42 @@ void CT3::ElementStiffness(double* Matrix)
         return;
     }
     
-    // 🔧 关键修复：构建平面应力弹性矩阵D
+    // 构建平面应力弹性矩阵D
     double factor = E / (1.0 - nu * nu);
-    double D[3][3] = {{0.0}};  // 初始化为0
+    double D[3][3] = {{0.0}};
     
-    D[0][0] = factor;                       // E/(1-ν²)
-    D[0][1] = factor * nu;                  // Eν/(1-ν²)
+    D[0][0] = factor;
+    D[0][1] = factor * nu;
     D[0][2] = 0.0;
     
-    D[1][0] = factor * nu;                  // Eν/(1-ν²)
-    D[1][1] = factor;                       // E/(1-ν²)
+    D[1][0] = factor * nu;
+    D[1][1] = factor;
     D[1][2] = 0.0;
     
     D[2][0] = 0.0;
     D[2][1] = 0.0;
-    D[2][2] = factor * (1.0 - nu) / 2.0;   // G = E/[2(1+ν)]
+    D[2][2] = factor * (1.0 - nu) / 2.0;
     
-    // 🔧 关键修复：构建应变-位移矩阵B
-    double B[3][6] = {{0.0}};  // 初始化为0
+    // 构建应变-位移矩阵B
+    double B[3][6] = {{0.0}};
     double inv_2A = 1.0 / (2.0 * area);
     
     for (unsigned int i = 0; i < 3; i++) {
         // 第1行：εxx = ∂u/∂x
-        B[0][2*i]   = b[i] * inv_2A;     
+        B[0][2*i]   = b[i] * inv_2A;
         B[0][2*i+1] = 0.0;
         
         // 第2行：εyy = ∂v/∂y
         B[1][2*i]   = 0.0;
-        B[1][2*i+1] = c[i] * inv_2A;     
+        B[1][2*i+1] = c[i] * inv_2A;
         
         // 第3行：γxy = ∂u/∂y + ∂v/∂x
-        B[2][2*i]   = c[i] * inv_2A;     
-        B[2][2*i+1] = b[i] * inv_2A;     
+        B[2][2*i]   = c[i] * inv_2A;
+        B[2][2*i+1] = b[i] * inv_2A;
     }
     
-    // 🔧 关键修复：计算 DB = D * B
-    double DB[3][6] = {{0.0}};  // 初始化为0
+    // 计算 DB = D * B
+    double DB[3][6] = {{0.0}};
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 6; j++) {
             for (int k = 0; k < 3; k++) {
@@ -330,52 +330,21 @@ void CT3::ElementStiffness(double* Matrix)
         }
     }
     
-    // 🚀 最终修复：按列存储兼容STAPpp Assembly
-    // STAPpp期望每列从上到下存储：K[0][j], K[1][j], ..., K[j][j]
+    // STAPpp兼容存储：每列从对角元素开始向上
     unsigned int index = 0;
     double volume = thickness * area;
     
-    for (unsigned int j = 0; j < 6; j++) {          // 外层循环：列
-        for (unsigned int i = j; i >= 0 && i <= j; i--) {  // 内层循环：从对角线向上
-            double sum = 0.0;
+    for (unsigned int j = 0; j < 6; j++) {
+        for (int offset = 0; offset <= j; offset++) {
+            unsigned int i = j - offset;
             
-            // 计算 K[i][j] = B^T[i] * DB[j]
+            double sum = 0.0;
             for (int k = 0; k < 3; k++) {
                 sum += B[k][i] * DB[k][j];
             }
             
             Matrix[index] = sum * volume;
             index++;
-            
-            if (i == 0) break;  // 防止无符号数下溢
-        }
-    }
-    
-    // 验证存储格式
-    cout << "\n=== STAPpp兼容存储格式验证 ===" << endl;
-    index = 0;
-    for (unsigned int j = 0; j < 6; j++) {
-        cout << "第" << j << "列 (对角元素先): ";
-        for (unsigned int i = j; i >= 0 && i <= j; i--) {
-            cout << "K[" << i << "][" << j << "]=" << setprecision(3) << Matrix[index] << " ";
-            index++;
-            if (i == 0) break;
-        }
-        cout << endl;
-    }
-    
-    // 验证Assembly兼容性
-    cout << "\n=== Assembly兼容性验证（修复后）===" << endl;
-    for (unsigned int j = 0; j < 3; j++) {
-        unsigned int DiagjElement = (j+1)*j/2;
-        cout << "第" << j << "列对角元素位置: " << DiagjElement << endl;
-        
-        for (unsigned int i = 0; i <= j; i++) {
-            unsigned int assemblyIndex = DiagjElement + j - i;
-            if (assemblyIndex < size) {
-                cout << "  Assembly: K[" << i << "][" << j << "] 从 Matrix[" 
-                     << assemblyIndex << "] = " << Matrix[assemblyIndex] << endl;
-            }
         }
     }
 }
