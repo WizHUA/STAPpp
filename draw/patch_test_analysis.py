@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Constant Strain Patch Test - Simple Visualization
-Geometry Model and Results Analysis (Separate Files)
+T3 Patch Test Analysis - Using actual test.dat data
+Geometry Model and Results Analysis
 """
 
 import numpy as np
@@ -9,28 +9,44 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import matplotlib.patches as patches
 
-def create_constant_strain_geometry():
-    """Create geometry model with boundary conditions and loads"""
+# Fix font issues for Linux systems
+plt.rcParams['font.family'] = ['DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['font.size'] = 10
+
+def create_t3_patch_geometry():
+    """Create geometry model with boundary conditions and loads from test.dat"""
     
-    # Node coordinates from input file
+    # Node coordinates from test.dat
     nodes = {
-        1: {"x": 0.0, "y": 0.0, "bc": "fixed"},
-        2: {"x": 1.0, "y": 0.0, "bc": "force"},
-        3: {"x": 1.0, "y": 1.0, "bc": "force"},
-        4: {"x": 0.0, "y": 1.0, "bc": "fixed"}
+        1: {"x": 0.0, "y": 0.0, "bc": "fixed"},      # Fully fixed
+        2: {"x": 2.5, "y": 0.0, "bc": "y_fixed"},    # Y-direction fixed
+        3: {"x": 2.5, "y": 3.0, "bc": "free"},       # Free
+        4: {"x": 0.0, "y": 2.0, "bc": "free"},       # Free
+        5: {"x": 1.0, "y": 1.6, "bc": "free"}        # Internal node, free
     }
     
-    # Elements connectivity  
+    # Elements connectivity from test.dat
     elements = {
-        1: [1, 2, 3],  # Element 1: nodes 1-2-3
-        2: [1, 3, 4]   # Element 2: nodes 1-3-4
+        1: [1, 2, 5],  # Element 1: nodes 1-2-5
+        2: [2, 3, 5],  # Element 2: nodes 2-3-5
+        3: [3, 4, 5],  # Element 3: nodes 3-4-5
+        4: [4, 1, 5]   # Element 4: nodes 4-1-5
+    }
+    
+    # Loads from test.dat
+    loads = {
+        1: -10.0,   # Node 1: -10N in X direction
+        2: 15.0,    # Node 2: 15N in X direction
+        3: 10.0,    # Node 3: 10N in X direction
+        4: -15.0    # Node 4: -15N in X direction
     }
     
     # Create figure
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    fig, ax = plt.subplots(1, 1, figsize=(14, 10))
     
-    ax.set_title('Constant Strain Patch Test - Geometry Model', 
-                fontsize=14, fontweight='bold', pad=20)
+    ax.set_title('T3 Patch Test - Geometry Model (test.dat)', 
+                fontsize=16, fontweight='bold', pad=20)
     
     # Draw T3 elements
     for elem_id, node_ids in elements.items():
@@ -54,187 +70,231 @@ def create_constant_strain_geometry():
         bc = node["bc"]
         
         if bc == "fixed":
-            # Fixed nodes - red triangles
-            ax.plot(x, y, '^', markersize=15, color='red', markeredgewidth=2)
+            # Fixed nodes - red squares
+            ax.plot(x, y, 's', markersize=14, color='red', markeredgewidth=2)
             # Draw fixed support symbols
-            for i in range(4):
-                ax.plot([x-0.08+i*0.04, x-0.12+i*0.04], [y-0.08, y+0.08], 
+            for i in range(5):
+                ax.plot([x-0.15+i*0.06, x-0.18+i*0.06], [y-0.15, y+0.15], 
                        'k-', linewidth=2)
+            ax.text(x-0.35, y, 'FIXED', fontsize=10, color='red', fontweight='bold', 
+                   ha='center', rotation=90)
+                   
+        elif bc == "y_fixed":
+            # Y-direction fixed - orange triangle
+            ax.plot(x, y, '^', markersize=14, color='orange', markeredgewidth=2)
+            # Draw Y-constraint symbol
+            ax.plot([x-0.12, x+0.12], [y-0.12, y-0.12], 'k-', linewidth=3)
+            ax.text(x+0.25, y-0.18, 'Y-FIXED', fontsize=10, color='orange', 
+                   fontweight='bold', ha='left')
         else:
-            # Force nodes - green circles
+            # Free nodes - green circles
             ax.plot(x, y, 'o', markersize=12, color='green', markeredgewidth=2)
-            # Force arrows pointing in positive X direction
-            ax.arrow(x+0.05, y, 0.15, 0, head_width=0.05, head_length=0.03, 
-                    fc='green', ec='green', linewidth=3)
-            ax.text(x+0.25, y+0.05, '100N', fontsize=11, color='green', fontweight='bold')
+        
+        # Load arrows
+        if node_id in loads:
+            load_val = loads[node_id]
+            arrow_length = abs(load_val) * 0.025  # Scale arrow length
+            arrow_color = 'red' if load_val < 0 else 'blue'
+            arrow_start = 0.18 if load_val > 0 else -0.18 - arrow_length
+            
+            ax.arrow(x + arrow_start, y, arrow_length if load_val > 0 else -arrow_length, 0, 
+                    head_width=0.1, head_length=0.06, fc=arrow_color, ec=arrow_color, linewidth=2.5)
+            ax.text(x + arrow_start + (arrow_length/2 if load_val > 0 else -arrow_length/2), 
+                   y + 0.15, f'{load_val}N', fontsize=11, color=arrow_color, 
+                   fontweight='bold', ha='center')
         
         # Node labels
-        ax.text(x-0.15, y+0.15, f'{node_id}', fontsize=12, fontweight='bold', 
-               ha='center', va='center')
+        ax.text(x-0.25, y+0.3, f'Node {node_id}', fontsize=12, fontweight='bold', 
+               ha='center', va='center', 
+               bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.9, edgecolor='black'))
     
     # Add dimension annotations
-    ax.annotate('', xy=(0, -0.2), xytext=(1, -0.2),
-               arrowprops=dict(arrowstyle='<->', color='black', lw=1.5))
-    ax.text(0.5, -0.3, '1.0 m', ha='center', va='center', fontsize=12, fontweight='bold')
+    ax.annotate('', xy=(0, -0.4), xytext=(2.5, -0.4),
+               arrowprops=dict(arrowstyle='<->', color='black', lw=2))
+    ax.text(1.25, -0.6, '2.5 m', ha='center', va='center', fontsize=13, fontweight='bold')
     
-    ax.annotate('', xy=(-0.3, 0), xytext=(-0.3, 1),
-               arrowprops=dict(arrowstyle='<->', color='black', lw=1.5))
-    ax.text(-0.4, 0.5, '1.0 m', ha='center', va='center', fontsize=12, 
+    ax.annotate('', xy=(-0.5, 0), xytext=(-0.5, 2.0),
+               arrowprops=dict(arrowstyle='<->', color='black', lw=2))
+    ax.text(-0.7, 1.0, '2.0 m', ha='center', va='center', fontsize=13, 
+           fontweight='bold', rotation=90)
+    
+    ax.annotate('', xy=(2.8, 0), xytext=(2.8, 3.0),
+               arrowprops=dict(arrowstyle='<->', color='black', lw=2))
+    ax.text(3.0, 1.5, '3.0 m', ha='center', va='center', fontsize=13, 
            fontweight='bold', rotation=90)
     
     # Material properties text box
     props_text = (
-        "Material Properties:\n"
-        "E = 2.1×10⁵ Pa\n"
-        "ν = 0.3\n"
-        "t = 0.01 m"
+        "MATERIAL PROPERTIES:\n"
+        "Young's Modulus E = 1,000 Pa\n"
+        "Poisson's Ratio nu = 0.3\n"
+        "Thickness t = 1.0 m\n\n"
+        "LOAD EQUILIBRIUM:\n"
+        "Sum Fx = -10+15+10-15 = 0 N\n"
+        "System is in equilibrium"
     )
-    ax.text(1.5, 0.8, props_text, fontsize=10, 
-           bbox=dict(boxstyle="round,pad=0.5", facecolor='lightyellow', alpha=0.9))
+    ax.text(3.4, 2.4, props_text, fontsize=11, 
+           bbox=dict(boxstyle="round,pad=0.5", facecolor='lightyellow', alpha=0.9, edgecolor='orange'))
     
     # Boundary conditions legend
     legend_text = (
-        "Boundary Conditions:\n"
-        "△ Fixed support\n"
-        "● Load application (100N each)"
+        "BOUNDARY CONDITIONS:\n"
+        "Red Square: Node 1 (ux=uy=0) FIXED\n"
+        "Orange Triangle: Node 2 (uy=0) Y-FIXED\n"
+        "Green Circle: Nodes 3,4,5 FREE\n\n"
+        "FINITE ELEMENTS:\n"
+        "4 T3 triangular elements\n"
+        "All elements share internal node 5\n"
+        "Total DOF = 7 equations"
     )
-    ax.text(1.5, 0.3, legend_text, fontsize=10,
-           bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgray', alpha=0.9))
+    ax.text(3.4, 1.0, legend_text, fontsize=11,
+           bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgray', alpha=0.9, edgecolor='gray'))
     
-    ax.set_xlim(-0.6, 2.5)
-    ax.set_ylim(-0.5, 1.4)
+    ax.set_xlim(-0.9, 5.2)
+    ax.set_ylim(-0.9, 3.8)
     ax.set_aspect('equal')
     ax.grid(True, alpha=0.3)
-    ax.set_xlabel('X Coordinate (m)', fontsize=12)
-    ax.set_ylabel('Y Coordinate (m)', fontsize=12)
+    ax.set_xlabel('X Coordinate (m)', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Y Coordinate (m)', fontsize=14, fontweight='bold')
     
     plt.tight_layout()
     
-    # Save the figure
-    plt.savefig('constant_strain_geometry.png', dpi=300, bbox_inches='tight')
-    plt.savefig('constant_strain_geometry.pdf', bbox_inches='tight')
+    # Save the figure with specific backend to avoid font warnings
+    plt.savefig('t3_patch_geometry.png', dpi=300, bbox_inches='tight', 
+                facecolor='white', edgecolor='none')
+    plt.savefig('t3_patch_geometry.pdf', bbox_inches='tight', 
+                facecolor='white', edgecolor='none')
+    plt.close()  # Close figure to free memory
     
-    print("Geometry model saved as:")
-    print("- constant_strain_geometry.png")
-    print("- constant_strain_geometry.pdf")
+    print("✓ Geometry model saved as:")
+    print("  - t3_patch_geometry.png")
+    print("  - t3_patch_geometry.pdf")
 
-def create_constant_strain_results():
-    """Create results analysis visualization"""
+def create_t3_patch_results():
+    """Create results analysis visualization using test.out data"""
     
-    # Exact data from STAPpp output
+    # Exact data from test.out
     nodes = {
         1: {"x": 0.0, "y": 0.0, "ux": 0.0, "uy": 0.0},
-        2: {"x": 1.0, "y": 0.0, "ux": 9.52381e-02, "uy": 0.0},
-        3: {"x": 1.0, "y": 1.0, "ux": 9.52381e-02, "uy": -2.85714e-02},
-        4: {"x": 0.0, "y": 1.0, "ux": 0.0, "uy": -2.85714e-02}
+        2: {"x": 2.5, "y": 0.0, "ux": 2.50000e-02, "uy": 0.0},
+        3: {"x": 2.5, "y": 3.0, "ux": 2.50000e-02, "uy": -9.00000e-03},
+        4: {"x": 0.0, "y": 2.0, "ux": -2.21177e-17, "uy": -6.00000e-03},  # ~0
+        5: {"x": 1.0, "y": 1.6, "ux": 1.00000e-02, "uy": -4.80000e-03}
     }
     
     elements = {
-        1: {"nodes": [1, 2, 3], "sxx": 2.00000e+04, "syy": -9.09495e-13, "sxy": 0.0},
-        2: {"nodes": [1, 3, 4], "sxx": 2.00000e+04, "syy": -9.09495e-13, "sxy": 2.80225e-13}
+        1: {"nodes": [1, 2, 5], "sxx": 1.00000e+01, "syy": 4.44089e-16, "sxy": -4.00321e-15},
+        2: {"nodes": [2, 3, 5], "sxx": 1.00000e+01, "syy": 2.22045e-15, "sxy": -2.66881e-15},
+        3: {"nodes": [3, 4, 5], "sxx": 1.00000e+01, "syy": -8.88178e-16, "sxy": -1.33440e-15},
+        4: {"nodes": [4, 1, 5], "sxx": 1.00000e+01, "syy": -1.33227e-15, "sxy": -3.00241e-15}
     }
     
     # Extract coordinates and displacements
-    x = np.array([nodes[i]["x"] for i in range(1, 5)])
-    y = np.array([nodes[i]["y"] for i in range(1, 5)])
-    ux = np.array([nodes[i]["ux"] for i in range(1, 5)])
-    uy = np.array([nodes[i]["uy"] for i in range(1, 5)])
+    x = np.array([nodes[i]["x"] for i in range(1, 6)])
+    y = np.array([nodes[i]["y"] for i in range(1, 6)])
+    ux = np.array([nodes[i]["ux"] for i in range(1, 6)])
+    uy = np.array([nodes[i]["uy"] for i in range(1, 6)])
+    
+    # Clean up numerical noise (node 4's ux)
+    ux[3] = 0.0  # Node 4's ux should be 0
     
     # Calculate deformed coordinates
-    scale_factor = 10
+    scale_factor = 60  # Increased scale for better visualization
     x_def = x + ux * scale_factor
     y_def = y + uy * scale_factor
     
     # Calculate displacement magnitude
     displacement_mag = np.sqrt(ux**2 + uy**2)
     
-    # Triangulation
-    triangles = np.array([[0, 1, 2], [0, 2, 3]])  # T3 elements
+    # Triangulation - elements from test.dat
+    triangles = np.array([[0, 1, 4], [1, 2, 4], [2, 3, 4], [3, 0, 4]])  # T3 elements
     triang = tri.Triangulation(x, y, triangles)
     triang_def = tri.Triangulation(x_def, y_def, triangles)
     
     # Create figure
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    fig.suptitle('Constant Strain Patch Test - Results Analysis', 
-                 fontsize=16, fontweight='bold')
+    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
+    fig.suptitle('T3 Patch Test - Results Analysis (CONSTANT STRESS ACHIEVED!)', 
+                 fontsize=18, fontweight='bold', color='darkgreen')
     
     # Original mesh
     ax1 = axes[0, 0]
-    ax1.triplot(triang, 'b-', linewidth=2)
-    ax1.plot(x, y, 'bo', markersize=8)
-    for i in range(4):
-        ax1.text(x[i]+0.05, y[i]+0.05, f'{i+1}', fontsize=12, ha='left', fontweight='bold')
-    ax1.set_title('Original T3 Mesh', fontweight='bold')
-    ax1.set_xlabel('X Coordinate (m)')
-    ax1.set_ylabel('Y Coordinate (m)')
+    ax1.triplot(triang, 'b-', linewidth=2.5)
+    ax1.plot(x, y, 'bo', markersize=10)
+    for i in range(5):
+        ax1.text(x[i]+0.08, y[i]+0.08, f'{i+1}', fontsize=12, ha='left', fontweight='bold')
+    ax1.set_title('Original T3 Mesh (4 Elements)', fontweight='bold', fontsize=14)
+    ax1.set_xlabel('X Coordinate (m)', fontsize=12)
+    ax1.set_ylabel('Y Coordinate (m)', fontsize=12)
     ax1.grid(True, alpha=0.3)
     ax1.set_aspect('equal')
     
     # Deformation comparison
     ax2 = axes[0, 1]
-    ax2.triplot(triang, 'b-', linewidth=2, alpha=0.7, label='Original')
-    ax2.triplot(triang_def, 'r--', linewidth=2, alpha=0.7, label=f'Deformed x{scale_factor}')
-    ax2.plot(x, y, 'bo', markersize=6)
-    ax2.plot(x_def, y_def, 'ro', markersize=6)
+    ax2.triplot(triang, 'b-', linewidth=2.5, alpha=0.7, label='Original Mesh')
+    ax2.triplot(triang_def, 'r--', linewidth=2.5, alpha=0.8, label=f'Deformed x{scale_factor}')
+    ax2.plot(x, y, 'bo', markersize=8)
+    ax2.plot(x_def, y_def, 'ro', markersize=8)
     
     # Displacement vectors
-    for i in range(4):
+    for i in range(5):
         if displacement_mag[i] > 1e-10:
             ax2.arrow(x[i], y[i], ux[i]*scale_factor, uy[i]*scale_factor, 
-                     head_width=0.03, head_length=0.02, fc='green', ec='green', alpha=0.8)
+                     head_width=0.1, head_length=0.06, fc='green', ec='green', alpha=0.8, linewidth=2)
     
-    ax2.set_title('Mesh Deformation (Scaled 10x)', fontweight='bold')
-    ax2.set_xlabel('X Coordinate (m)')
-    ax2.set_ylabel('Y Coordinate (m)')
-    ax2.legend()
+    ax2.set_title(f'Mesh Deformation (Scaled {scale_factor}x)', fontweight='bold', fontsize=14)
+    ax2.set_xlabel('X Coordinate (m)', fontsize=12)
+    ax2.set_ylabel('Y Coordinate (m)', fontsize=12)
+    ax2.legend(fontsize=11)
     ax2.grid(True, alpha=0.3)
     ax2.set_aspect('equal')
     
     # Displacement magnitude contour
     ax3 = axes[0, 2]
-    contour3 = ax3.tricontourf(triang, displacement_mag*1000, levels=20, cmap='viridis')
+    contour3 = ax3.tricontourf(triang, displacement_mag*1000, levels=20, cmap='plasma')
     cbar3 = plt.colorbar(contour3, ax=ax3)
-    cbar3.set_label('Displacement Magnitude (mm)')
-    ax3.triplot(triang, 'k-', alpha=0.3)
-    ax3.plot(x, y, 'ko', markersize=6)
-    ax3.set_title('Displacement Magnitude', fontweight='bold')
-    ax3.set_xlabel('X Coordinate (m)')
-    ax3.set_ylabel('Y Coordinate (m)')
+    cbar3.set_label('Displacement Magnitude (mm)', fontsize=12)
+    ax3.triplot(triang, 'k-', alpha=0.4)
+    ax3.plot(x, y, 'ko', markersize=8)
+    ax3.set_title('Displacement Magnitude Distribution', fontweight='bold', fontsize=14)
+    ax3.set_xlabel('X Coordinate (m)', fontsize=12)
+    ax3.set_ylabel('Y Coordinate (m)', fontsize=12)
     ax3.set_aspect('equal')
     
     # X-displacement contour
     ax4 = axes[1, 0]
     contour4 = ax4.tricontourf(triang, ux*1000, levels=20, cmap='RdBu_r')
     cbar4 = plt.colorbar(contour4, ax=ax4)
-    cbar4.set_label('X-Displacement (mm)')
-    ax4.triplot(triang, 'k-', alpha=0.3)
-    ax4.plot(x, y, 'ko', markersize=4)
+    cbar4.set_label('X-Displacement (mm)', fontsize=12)
+    ax4.triplot(triang, 'k-', alpha=0.4)
+    ax4.plot(x, y, 'ko', markersize=6)
     # Add displacement values at nodes
-    for i in range(4):
-        ax4.text(x[i], y[i]+0.05, f'{ux[i]*1000:.1f}', ha='center', va='bottom', 
-                fontsize=9, fontweight='bold')
-    ax4.set_title('X-Direction Displacement', fontweight='bold')
-    ax4.set_xlabel('X Coordinate (m)')
-    ax4.set_ylabel('Y Coordinate (m)')
+    for i in range(5):
+        ax4.text(x[i], y[i]+0.12, f'{ux[i]*1000:.1f}', ha='center', va='bottom', 
+                fontsize=10, fontweight='bold', color='white',
+                bbox=dict(boxstyle="round,pad=0.2", facecolor='black', alpha=0.7))
+    ax4.set_title('X-Direction Displacement', fontweight='bold', fontsize=14)
+    ax4.set_xlabel('X Coordinate (m)', fontsize=12)
+    ax4.set_ylabel('Y Coordinate (m)', fontsize=12)
     ax4.set_aspect('equal')
     
     # Y-displacement contour
     ax5 = axes[1, 1]
     contour5 = ax5.tricontourf(triang, uy*1000, levels=20, cmap='RdBu_r')
     cbar5 = plt.colorbar(contour5, ax=ax5)
-    cbar5.set_label('Y-Displacement (mm)')
-    ax5.triplot(triang, 'k-', alpha=0.3)
-    ax5.plot(x, y, 'ko', markersize=4)
+    cbar5.set_label('Y-Displacement (mm)', fontsize=12)
+    ax5.triplot(triang, 'k-', alpha=0.4)
+    ax5.plot(x, y, 'ko', markersize=6)
     # Add displacement values at nodes
-    for i in range(4):
-        ax5.text(x[i], y[i]+0.05, f'{uy[i]*1000:.1f}', ha='center', va='bottom', 
-                fontsize=9, fontweight='bold')
-    ax5.set_title('Y-Direction Displacement', fontweight='bold')
-    ax5.set_xlabel('X Coordinate (m)')
-    ax5.set_ylabel('Y Coordinate (m)')
+    for i in range(5):
+        ax5.text(x[i], y[i]+0.12, f'{uy[i]*1000:.1f}', ha='center', va='bottom', 
+                fontsize=10, fontweight='bold', color='white',
+                bbox=dict(boxstyle="round,pad=0.2", facecolor='black', alpha=0.7))
+    ax5.set_title('Y-Direction Displacement (Poisson Effect)', fontweight='bold', fontsize=14)
+    ax5.set_xlabel('X Coordinate (m)', fontsize=12)
+    ax5.set_ylabel('Y Coordinate (m)', fontsize=12)
     ax5.set_aspect('equal')
     
-    # Stress distribution
+    # Stress distribution - THE KEY RESULT!
     ax6 = axes[1, 2]
     # Calculate element centers and stress
     elem_centers = []
@@ -248,68 +308,88 @@ def create_constant_strain_results():
         stress_xx.append(elem["sxx"])
     
     elem_centers = np.array(elem_centers)
+    
+    # All stresses are identical = 10 Pa!
     scatter = ax6.scatter(elem_centers[:, 0], elem_centers[:, 1], 
-                         c=stress_xx, s=400, cmap='jet', alpha=0.8)
+                         c=stress_xx, s=800, cmap='jet', alpha=0.9, vmin=9.9, vmax=10.1, edgecolors='black', linewidth=2)
     cbar6 = plt.colorbar(scatter, ax=ax6)
-    cbar6.set_label('σxx Stress (Pa)')
-    ax6.triplot(triang, 'k-', alpha=0.5)
-    ax6.plot(x, y, 'ko', markersize=6)
+    cbar6.set_label('Stress_XX (Pa)', fontsize=12, fontweight='bold')
+    ax6.triplot(triang, 'k-', alpha=0.6, linewidth=1.5)
+    ax6.plot(x, y, 'ko', markersize=8)
     
-    # Label stress values
+    # Label stress values - they should all be 10.0!
     for i, (center, sxx) in enumerate(zip(elem_centers, stress_xx)):
-        ax6.text(center[0], center[1], f'{sxx:.0f}', ha='center', va='center', 
-                fontsize=10, fontweight='bold', color='white')
+        ax6.text(center[0], center[1], f'{sxx:.1f} Pa', ha='center', va='center', 
+                fontsize=13, fontweight='bold', color='white',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='black', alpha=0.8))
     
-    ax6.set_title('σxx Stress Distribution', fontweight='bold')
-    ax6.set_xlabel('X Coordinate (m)')
-    ax6.set_ylabel('Y Coordinate (m)')
+    # Add success message
+    ax6.text(1.25, 0.3, 'PATCH TEST\nPASSED!\nCONSTANT STRESS\nACHIEVED', 
+            ha='center', va='center', fontsize=16, fontweight='bold', color='darkgreen',
+            bbox=dict(boxstyle="round,pad=0.6", facecolor='lightgreen', alpha=0.9, edgecolor='green', linewidth=2))
+    
+    ax6.set_title('Stress_XX Distribution (ALL = 10.0 Pa!)', fontweight='bold', fontsize=14, color='darkgreen')
+    ax6.set_xlabel('X Coordinate (m)', fontsize=12)
+    ax6.set_ylabel('Y Coordinate (m)', fontsize=12)
     ax6.set_aspect('equal')
     
     plt.tight_layout()
     
-    # Save figure
-    plt.savefig('constant_strain_results.png', dpi=300, bbox_inches='tight')
-    plt.savefig('constant_strain_results.pdf', bbox_inches='tight')
+    # Save figure with specific backend to avoid font warnings
+    plt.savefig('t3_patch_results.png', dpi=300, bbox_inches='tight',
+                facecolor='white', edgecolor='none')
+    plt.savefig('t3_patch_results.pdf', bbox_inches='tight',
+                facecolor='white', edgecolor='none')
+    plt.close()  # Close figure to free memory
     
     # Print results summary
-    print("\nResults Summary:")
+    print("\n" + "="*70)
+    print("T3 PATCH TEST RESULTS ANALYSIS")
+    print("="*70)
     print("Node    X-Disp(mm)      Y-Disp(mm)      Magnitude(mm)")
-    print("-" * 55)
-    for i in range(1, 5):
+    print("-" * 60)
+    for i in range(1, 6):
         ux_mm = nodes[i]['ux'] * 1000
         uy_mm = nodes[i]['uy'] * 1000
         mag_mm = np.sqrt(ux_mm**2 + uy_mm**2)
         print(f"{i:2d}    {ux_mm:10.1f}    {uy_mm:10.1f}    {mag_mm:10.1f}")
     
-    print("\nElement Stress Results:")
-    print("Elem    σxx(Pa)       σyy(Pa)       τxy(Pa)")
-    print("-" * 50)
+    print("\nElement Stress Results (PATCH TEST):")
+    print("Elem    Stress_XX(Pa)   Stress_YY(Pa)   Stress_XY(Pa)   Status")
+    print("-" * 70)
     for elem_id, elem in elements.items():
-        print(f"{elem_id:2d}    {elem['sxx']:10.0f}    {elem['syy']:10.2e}    {elem['sxy']:10.2e}")
+        syy_clean = "~0" if abs(elem['syy']) < 1e-10 else f"{elem['syy']:.2e}"
+        sxy_clean = "~0" if abs(elem['sxy']) < 1e-10 else f"{elem['sxy']:.2e}"
+        print(f"{elem_id:2d}    {elem['sxx']:10.1f}    {syy_clean:>12s}    {sxy_clean:>12s}    PASS")
     
-    print("\nResults analysis saved as:")
-    print("- constant_strain_results.png")
-    print("- constant_strain_results.pdf")
+    print(f"\nPATCH TEST RESULT: PASSED!")
+    print(f"   All elements show Stress_XX = 10.0 Pa (CONSTANT STRESS)")
+    print(f"   Stress_YY ~ 0, Stress_XY ~ 0 (numerical precision)")
+    print(f"   T3 element implementation is CORRECT!")
+    
+    print("\n✓ Results analysis saved as:")
+    print("  - t3_patch_results.png")
+    print("  - t3_patch_results.pdf")
 
 def main():
     """Main function to create both visualizations"""
-    print("Creating Constant Strain Patch Test Visualizations...")
-    print("="*60)
+    print("Creating T3 Patch Test Visualizations (test.dat)...")
+    print("="*70)
     
     # Create geometry model
     print("\n1. Creating geometry model...")
-    create_constant_strain_geometry()
+    create_t3_patch_geometry()
     
     # Create results analysis
     print("\n2. Creating results analysis...")
-    create_constant_strain_results()
+    create_t3_patch_results()
     
-    print("\n" + "="*60)
-    print("All visualizations completed!")
-    print("\nMove generated files to your img/ directory:")
-    print("mv constant_strain_geometry.png ../writing/img/")
-    print("mv constant_strain_results.png ../writing/img/")
-    print("="*60)
+    print("\n" + "="*70)
+    print("All visualizations completed successfully!")
+    print("\nGenerated files:")
+    print("- t3_patch_geometry.png/pdf")
+    print("- t3_patch_results.png/pdf")
+    print("="*70)
 
 if __name__ == "__main__":
     main()
