@@ -89,7 +89,7 @@ def parse_nodal_data(content, num_nodes):
                     bc_x, bc_y, bc_z = int(parts[1]), int(parts[2]), int(parts[3])
                     x, y, z = float(parts[4]), float(parts[5]), float(parts[6])
                     
-                    nodes[node_id] = {
+                    nodes[str(node_id)] = {  # 使用字符串作为key保持一致性
                         'id': node_id,
                         'x': x, 'y': y, 'z': z,
                         'bc_x': bc_x, 'bc_y': bc_y, 'bc_z': bc_z
@@ -103,7 +103,7 @@ def parse_load_data(content):
     """解析载荷数据"""
     loads = {}
     
-    # 查找载荷数据部分
+    # 查找载荷数据部分 - 修正正则表达式
     load_section = re.search(r'L O A D   C A S E   D A T A.*?NODE.*?MAGNITUDE(.*?)E L E M E N T', 
                             content, re.DOTALL)
     
@@ -111,7 +111,7 @@ def parse_load_data(content):
         load_lines = load_section.group(1).strip().split('\n')
         for line in load_lines:
             line = line.strip()
-            if not line or 'NODE' in line or 'NUMBER' in line:
+            if not line or 'NODE' in line or 'NUMBER' in line or 'LOAD CASE' in line or 'CONCENTRATED' in line:
                 continue
             
             # 解析载荷行: NODE DIRECTION MAGNITUDE
@@ -122,9 +122,9 @@ def parse_load_data(content):
                     direction = int(parts[1])
                     magnitude = float(parts[2])
                     
-                    if node_id not in loads:
-                        loads[node_id] = {}
-                    loads[node_id][direction] = magnitude
+                    if str(node_id) not in loads:  # 使用字符串作为key
+                        loads[str(node_id)] = {}
+                    loads[str(node_id)][direction] = magnitude
                 except ValueError:
                     continue
     
@@ -134,15 +134,15 @@ def parse_element_data(content):
     """解析单元数据"""
     elements = {}
     
-    # 查找单元定义部分
-    element_section = re.search(r'ELEMENT.*?NUMBER.*?SET NUMBER(.*?)TOTAL SYSTEM DATA', 
+    # 查找单元定义部分 - 修正正则表达式
+    element_section = re.search(r'T3 ELEMENT INFORMATION:.*?ELEMENT.*?SET NUMBER(.*?)Ele =', 
                                content, re.DOTALL)
     
     if element_section:
         element_lines = element_section.group(1).strip().split('\n')
         for line in element_lines:
             line = line.strip()
-            if not line or 'ELEMENT' in line or 'NUMBER' in line or 'Ele' in line:
+            if not line or 'ELEMENT' in line or 'NUMBER' in line:
                 continue
             
             # 解析单元行: ELEMENT_ID NODE_I NODE_J NODE_K MATERIAL_SET
@@ -155,7 +155,7 @@ def parse_element_data(content):
                     node_k = int(parts[3])
                     material_set = int(parts[4])
                     
-                    elements[elem_id] = {
+                    elements[str(elem_id)] = {  # 使用字符串作为key
                         'id': elem_id,
                         'nodes': [node_i, node_j, node_k],
                         'material_set': material_set
@@ -189,7 +189,7 @@ def parse_displacement_results(content, num_nodes):
                     uy = float(parts[2])
                     uz = float(parts[3])
                     
-                    displacements[node_id] = {
+                    displacements[str(node_id)] = {  # 使用字符串作为key
                         'ux': ux, 'uy': uy, 'uz': uz
                     }
                 except ValueError:
@@ -201,7 +201,7 @@ def parse_stress_results(content):
     """解析应力结果"""
     stresses = {}
     
-    # 查找应力结果部分
+    # 查找应力结果部分 - 修正正则表达式
     stress_section = re.search(r'S T R E S S  C A L C U L A T I O N S.*?ELEMENT.*?STRESS_XY(.*?)S O L U T I O N', 
                               content, re.DOTALL)
     
@@ -221,7 +221,7 @@ def parse_stress_results(content):
                     syy = float(parts[2])
                     sxy = float(parts[3])
                     
-                    stresses[elem_id] = {
+                    stresses[str(elem_id)] = {  # 使用字符串作为key
                         'sxx': sxx, 'syy': syy, 'sxy': sxy
                     }
                 except ValueError:
@@ -281,7 +281,7 @@ def generate_summary(data, summary_path):
         f.write("NODE COORDINATES:\n")
         f.write("-"*40 + "\n")
         f.write(f"{'Node':<4} {'X':<10} {'Y':<10} {'Z':<10} {'BC':<8}\n")
-        for node_id, node in sorted(data['nodes'].items()):
+        for node_id, node in sorted(data['nodes'].items(), key=lambda x: int(x[0])):
             bc_str = f"{node['bc_x']}{node['bc_y']}{node['bc_z']}"
             f.write(f"{node_id:<4} {node['x']:<10.3f} {node['y']:<10.3f} {node['z']:<10.3f} {bc_str:<8}\n")
         
@@ -289,7 +289,7 @@ def generate_summary(data, summary_path):
         f.write("-"*40 + "\n")
         if data['loads']:
             f.write(f"{'Node':<4} {'Dir':<3} {'Magnitude':<12}\n")
-            for node_id, load_dict in sorted(data['loads'].items()):
+            for node_id, load_dict in sorted(data['loads'].items(), key=lambda x: int(x[0])):
                 for direction, magnitude in load_dict.items():
                     f.write(f"{node_id:<4} {direction:<3} {magnitude:<12.3f}\n")
         else:
@@ -298,14 +298,14 @@ def generate_summary(data, summary_path):
         f.write("\nELEMENT CONNECTIVITY:\n")
         f.write("-"*40 + "\n")
         f.write(f"{'Elem':<4} {'Node_I':<6} {'Node_J':<6} {'Node_K':<6}\n")
-        for elem_id, elem in sorted(data['elements'].items()):
+        for elem_id, elem in sorted(data['elements'].items(), key=lambda x: int(x[0])):
             nodes = elem['nodes']
             f.write(f"{elem_id:<4} {nodes[0]:<6} {nodes[1]:<6} {nodes[2]:<6}\n")
         
         f.write("\nDISPLACEMENT RESULTS:\n")
         f.write("-"*40 + "\n")
         f.write(f"{'Node':<4} {'UX(mm)':<12} {'UY(mm)':<12} {'UZ(mm)':<12} {'Mag(mm)':<12}\n")
-        for node_id, disp in sorted(data['displacements'].items()):
+        for node_id, disp in sorted(data['displacements'].items(), key=lambda x: int(x[0])):
             ux_mm = disp['ux'] * 1000
             uy_mm = disp['uy'] * 1000
             uz_mm = disp['uz'] * 1000
@@ -315,7 +315,7 @@ def generate_summary(data, summary_path):
         f.write("\nSTRESS RESULTS:\n")
         f.write("-"*40 + "\n")
         f.write(f"{'Elem':<4} {'SXX(Pa)':<12} {'SYY(Pa)':<12} {'SXY(Pa)':<12} {'Mises(Pa)':<12}\n")
-        for elem_id, stress in sorted(data['stresses'].items()):
+        for elem_id, stress in sorted(data['stresses'].items(), key=lambda x: int(x[0])):
             sxx, syy, sxy = stress['sxx'], stress['syy'], stress['sxy']
             mises = np.sqrt(sxx**2 + syy**2 - sxx*syy + 3*sxy**2)
             f.write(f"{elem_id:<4} {sxx:<12.2f} {syy:<12.2f} {sxy:<12.2f} {mises:<12.2f}\n")

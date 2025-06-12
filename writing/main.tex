@@ -57,7 +57,7 @@
 
 \title{\textbf{STAPpp程序T3三角形单元扩展实验报告}}
 \author{清华大学行健书院 \\ 有限元法基础课程大作业 \\ 
-        \textbf{姓名：}吴寄 \quad \textbf{学号：}xxx \quad \textbf{专业：}xxx}
+        \textbf{姓名：}吴致远 \quad \textbf{学号：}2022013266 \quad \textbf{班级：}行健-力2}
 \date{\today}
 
 \begin{document}
@@ -552,6 +552,34 @@ void CT3::ElementStress(double* stress, double* Displacement)
 }
 \end{lstlisting}
 
+\subsection{运行方式说明}
+
+本实验开发的T3单元扩展程序采用标准的STAPpp工作流程，具体运行步骤如下：
+
+\begin{enumerate}
+    \item \textbf{输入文件准备}：按照STAPpp标准格式设计\texttt{.dat}输入文件，包含节点坐标、边界条件、载荷信息和单元连接关系。T3单元类型标识符为3，材料类型为平面应力材料。
+
+    \item \textbf{有限元求解}：使用扩展后的STAPpp程序执行计算：
+    \begin{lstlisting}[language=bash]
+./STAPpp input_file.dat
+    \end{lstlisting}
+    程序将自动读取输入文件，进行有限元分析计算，并生成包含完整求解信息的\texttt{.out}输出文件。
+
+    \item \textbf{结果数据提取}：使用开发的\texttt{get.py}脚本解析输出文件，提取节点位移和单元应力等关键结果：
+    \begin{lstlisting}[language=bash]
+python3 get.py input_file.out
+    \end{lstlisting}
+    脚本将生成结构化的JSON数据文件和文本摘要报告，便于后续处理和分析。
+
+    \item \textbf{结果可视化}：使用\texttt{visualize\_results.py}脚本生成专业的工程图表：
+    \begin{lstlisting}[language=bash]
+python3 visualize_results.py input_file.out
+    \end{lstlisting}
+    脚本将自动生成包含原始网格、变形对比、位移云图、应力分布等多种可视化结果的PNG和PDF格式图片文件。
+\end{enumerate}
+
+整个工作流程实现了从问题定义、数值求解到结果可视化的完整自动化处理，为T3单元的验证和工程应用提供了便捷高效的计算平台。
+
 \section{算例设计与验证策略}
 
 \subsection{验证方法论}
@@ -610,22 +638,8 @@ T3 Patch Test - Test
 
 \subsection{收敛性分析设计}
 
-\subsubsection{悬臂梁收敛性测试}
-
-设计一个经典的悬臂梁问题，通过逐步加密网格观察解的收敛性。几何参数为：长度$L = 1$m，高度$H = 1$m，在自由端施加集中力$P = 1000$N。
-
-根据Euler-Bernoulli梁理论，自由端位移的理论解为：
-
-\begin{equation}
-\delta_{\text{theory}} = \frac{PL^3}{3EI} = \frac{1000 \times (1)^3}{3 \times 2.1 \times 10^5 \times \frac{0.1 \times 1^3}{12}} \approx 0.190 \text{mm}
-\end{equation}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\textwidth]{img/empty.png}
-\caption{悬臂梁收敛性分析：粗网格到细网格}
-\label{fig:convergence_meshes}
-\end{figure}
+设计悬臂梁问题验证T3单元的数值收敛性，几何参数为长度$L = 4$m、高度$H = 2$m，左端完全固定，右端自由端施加向下集中力$P = 100$N。分别建立2单元、8单元、32单元三套网格模型进行有限元计算，通过网格加密观察数值解的收敛行为。\
+材料参数为弹性模量$E = 100$Pa、泊松比$\nu = 0.3$、厚度$t = 1$m，理论参考解取自经典梁理论或高密度网格解。
 
 \subsection{算例验证：例4-4梯形结构}
 
@@ -643,8 +657,6 @@ T3 Patch Test - Test
 该算例具有以下特点：
 \begin{itemize}
     \item \textbf{几何复杂性}：梯形结构具有不规则边界，考验T3单元的几何适应能力
-    \item \textbf{载荷条件}：集中载荷施加在结构顶部，产生复杂的应力分布
-    \item \textbf{边界条件}：底部完全固定，形成典型的工程约束条件
     \item \textbf{可验证性}：作为课程标准习题，具有明确的求解要求和参考标准
 \end{itemize}
 
@@ -653,8 +665,6 @@ T3 Patch Test - Test
 \section{实验结果与分析}
 
 \subsection{分片试验结果}
-
-分片试验结果验证了T3单元在常应变状态下的精确性。位移结果完全符合物理预期：节点1完全固定位移为零，节点2仅Y方向约束X方向产生最大位移25.0mm，所有自由节点均显示负Y位移体现泊松收缩效应，位移场连续且物理合理。关键的应力验证结果表明所有单元实现了完美的常应力状态，所有四个单元的$\sigma_{xx}$应力完全相同均为10.0Pa，$\tau_{xy}$应力在数值精度范围内为零（$\sim 10^{-15}$量级），$\sigma_{yy}$应力在数值精度范围内为零符合单轴拉伸状态，T3单元完全通过分片试验验证了单元实现的正确性。
 
 \begin{table}[H]
 \centering
@@ -687,7 +697,7 @@ T3 Patch Test - Test
 \end{tabular}
 \end{table}
 
-分片试验的详细位移和应力分析结果如图\ref{fig:t3_displacement_stress}所示，左图显示载荷方向的位移分布最大位移出现在右侧边界，中图显示泊松收缩效应所有节点均为负位移，右图显示所有单元应力值完全相同（10.0Pa）实现理想常应力状态。这一结果完美验证了T3单元能够精确表示常应力状态，满足有限元分片试验的基本要求，证明了单元实现的理论正确性和数值精度。
+分片试验的节点位移、应力如上表所示，全局位移图和应力图如图\ref{fig:t3_displacement_stress}所示，左图和中图为位移图，显示有限元位移场与初始人工外加的线性位移场一致，右图显示所有单元应力值完全相同（10.0Pa）实现理想常应力状态。这一结果完美验证了T3单元能够精确表示常应力状态，满足有限元分片试验的基本要求，证明了单元实现的理论正确性和数值精度。
 
 \begin{figure}[H]
 \centering
@@ -698,31 +708,28 @@ T3 Patch Test - Test
 
 \subsection{收敛性分析结果}
 
-通过对悬臂梁问题的收敛性分析，验证了T3单元的数值收敛性。
+分别将网格划分为2个、8个、32个单元进行有限元计算，并计算误差的L2范数。将误差与h进行双对数拟合后得到如下结果。分析图表可见加密单元后误差显著减小，系统收敛率约为1.32，基本通过收敛性分析。
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{img/empty.png}
-\caption{悬臂梁收敛性分析：位移收敛曲线}
+\includegraphics[width=0.85\textwidth]{img/convergence_analysis.png}
+\caption{T3单元收敛性分析：L2误差对网格尺寸的双对数拟合}
 \label{fig:convergence_curve}
 \end{figure}
 
 \begin{table}[H]
 \centering
-\caption{收敛性分析结果}
-\begin{tabular}{cccc}
+\caption{T3单元收敛性分析结果}
+\begin{tabular}{ccc}
 \toprule
-网格密度 & 单元数 & 末端位移 (mm) & 相对误差 \\
+单元数 & L2范数误差 (mm) & 网格尺寸 h \\
 \midrule
-粗网格 (2×1) & 4 & 0.285 & 50.0\% \\
-中等网格 (4×2) & 16 & 0.228 & 20.0\% \\
-细网格 (8×4) & 64 & 0.205 & 7.9\% \\
-理论值 & - & 0.190 & - \\
+2 & 23.76 & 2.0 \\
+8 & 15.49 & 1.0 \\
+32 & 3.80 & 0.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\textbf{结论}：随着网格加密，数值解单调收敛于理论解，收敛率符合有限元理论预期。相对误差从50\%降低到7.9\%，验证了T3单元的数值收敛性。
 
 \subsection{算例验证结果}
 
@@ -785,60 +792,15 @@ T3 Patch Test - Test
 \toprule
 验证项目 & 结果 & 评价标准 \\
 \midrule
-常应变分片试验 & ✓ 通过 & 应力误差 < 0.1\% \\
+分片试验 & ✓ 通过 & 有限元位移场与人工位移场一致 \\
 收敛性分析 & ✓ 通过 & 单调收敛，合理收敛率 \\
-算例验证 & ✓ 通过 & 结果符合物理直觉 \\
-程序稳定性 & ✓ 通过 & 无数值异常 \\
+算例验证 & ✓ 通过 & 计算结果与参考书结果一致 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 所有验证测试均通过，证明了T3单元实现的正确性和可靠性。
 
-\section{技术难点与解决方案}
-
-\subsection{矩阵存储格式适配}
-
-STAPpp采用一维变带宽存储格式，需要将$6 \times 6$的单元刚度矩阵正确映射到一维数组。
-
-\textbf{问题分析}：单元刚度矩阵为对称矩阵，只需存储上三角部分，但必须严格按照STAPpp的存储约定进行映射。
-
-\textbf{解决方案}：采用列优先顺序进行上三角映射，确保与全局矩阵组装算法兼容：
-
-\begin{lstlisting}[language=C++]
-// 上三角存储映射：Matrix[i*6 + j], i ≤ j
-for (unsigned int j = 0; j < 6; j++) {
-    for (unsigned int i = 0; i <= j; i++) {
-        Matrix[i * 6 + j] = stiffness_value;
-    }
-}
-\end{lstlisting}
-
-\subsection{数值稳定性保障}
-
-在面积计算和矩阵运算中可能出现数值精度问题，需要采取预防措施。
-
-\textbf{主要措施}：
-\begin{enumerate}
-    \item \textbf{双精度计算}：所有浮点运算采用double类型，确保计算精度
-    \item \textbf{退化检测}：设置面积阈值检查，避免奇异矩阵的产生
-    \item \textbf{节点顺序校正}：确保节点按逆时针顺序排列，避免负面积
-    \item \textbf{调试输出}：在关键计算步骤增加调试信息，便于问题定位
-\end{enumerate}
-
-\subsection{调试策略与验证方法}
-
-为确保实现正确性，采用了系统性的调试和验证策略：
-
-\begin{enumerate}
-    \item \textbf{单步验证}：逐步验证形函数、应变矩阵、刚度矩阵的计算正确性
-    \item \textbf{简单算例}：从最简单的单单元算例开始验证，逐步增加复杂度
-    \item \textbf{对比验证}：将计算结果与理论解进行对比
-    \item \textbf{分片试验}：使用常应变拉伸试试验验证单元性能
-    \item \textbf{边界条件检查}：验证边界条件施加和载荷传递的正确性
-\end{enumerate}
-
-这种多层次的验证方法确保了程序实现的可靠性和准确性。
 
 \section{参考文献}
 
@@ -848,74 +810,6 @@ for (unsigned int j = 0; j < 6; j++) {
 
 \section{附录}
 
-\subsection{附录A：完整源代码结构}
-
-本实验的完整源代码已上传至GitHub仓库，主要文件结构如下：
-
-\begin{lstlisting}[caption=项目文件结构]
-STAPpp-T3/
-├── src/
-│   ├── cpp/
-│   │   ├── T3.cpp                  // T3单元核心实现
-│   │   └── PlaneStressMaterial.cpp // 平面应力材料
-│   └── h/
-│       ├── T3.h                    // T3单元类声明
-│       └── PlaneStressMaterial.h   // 平面应力材料类声明
-├── data/
-│   ├── patch_tests/            // 分片试验数据
-│   │   └── constant_strain.dat
-│   ├── convergence_tests/      // 收敛性分析数据
-│   │   ├── cantilever_coarse.dat
-│   │   └── cantilever_fine.dat
-│   └── validation_tests/       // 工程验证数据
-│       └── wzy.dat
-├── results/
-│   ├── displacement_plots/     // 位移分析图
-│   ├── stress_plots/          // 应力分析图
-│   └── convergence_data/      // 收敛性数据
-└── docs/
-    └── validation_report.pdf  // 验证报告
-\end{lstlisting}
-
-\subsection{附录B：关键算例输入文件}
-
-所有验证算例的完整输入文件存储在项目的\texttt{data/}目录下，包括：
-\begin{itemize}
-    \item \texttt{patch\_tests/constant\_strain.dat} - 常应变拉伸试验
-    \item \texttt{convergence\_tests/cantilever\_coarse.dat} - 粗网格悬臂梁
-    \item \texttt{convergence\_tests/cantilever\_fine.dat} - 细网格悬臂梁
-    \item \texttt{validation\_tests/wzy.dat} - 例4-4梯形结构验证
-\end{itemize}
-
-\subsection{附录C：验证结果详细数据}
-
-详细的数值计算结果、可视化图表和性能统计数据存储在\texttt{results/}目录下，包括：
-
-\begin{itemize}
-    \item 各算例的完整位移和应力数据
-    \item 收敛性分析的详细数值记录  
-    \item 计算性能和精度统计信息
-\end{itemize}
-
-这些数据为进一步的研究和算法改进提供了全面的参考依据。
-
-\subsection{附录D：可视化结果展示}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{img/wzy_t3_analysis.png}
-\caption{例4-4算例完整可视化分析结果}
-\label{fig:wzy_complete_analysis}
-\end{figure}
-
-图\ref{fig:wzy_complete_analysis}展示了例4-4梯形结构的完整分析结果，包括：
-\begin{itemize}
-    \item 原始网格与变形对比
-    \item 位移矢量场分布
-    \item X、Y方向位移云图
-    \item von Mises应力分布
-\end{itemize}
-
-这些可视化结果直观地验证了T3单元实现的正确性和工程实用性。
+仓库链接：\url{https://github.com/WizHUA/STAPpp.git}
 
 \end{document}
